@@ -253,10 +253,11 @@ function PaqueteCard({ paquete, colorClass, buttonColor }: PaqueteCardProps) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Fecha inicio</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">📅 Fecha de inicio</label>
                   <input
                     type="date"
                     name="fecha"
+                    placeholder="Fecha"
                     className="w-full px-3 py-3 text-sm md:px-4 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900 [color-scheme:light]"
                     style={{ colorScheme: 'light' }}
                     required
@@ -264,13 +265,14 @@ function PaqueteCard({ paquete, colorClass, buttonColor }: PaqueteCardProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Personas</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">👥 Personas</label>
                   <input
                     type="number"
                     name="personas"
                     min="1"
                     defaultValue="1"
-                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                    placeholder="1"
+                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900"
                     required
                   />
                 </div>

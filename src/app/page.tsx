@@ -370,32 +370,40 @@ export default function Home() {
                 <input
                   type="number"
                   name="viajeros"
-                  placeholder="Número de viajeros"
+                  placeholder="Ej: 2"
                   min="1"
-                  className="px-5 py-4 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                  defaultValue="1"
+                  className="px-5 py-4 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900"
                   required
                 />
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">
-                <input
-                  type="date"
-                  name="fecha"
-                  className="px-4 py-4 md:px-5 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900 [color-scheme:light]"
-                  style={{ colorScheme: 'light' }}
-                  required
-                />
-                <select
-                  name="duracion"
-                  className="px-5 py-4 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                  required
-                >
-                  <option value="">Duración del viaje</option>
-                  <option value="1-3">1-3 días</option>
-                  <option value="4-7">4-7 días</option>
-                  <option value="8-14">8-14 días</option>
-                  <option value="15+">15+ días</option>
-                </select>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">📅 Fecha del viaje</label>
+                  <input
+                    type="date"
+                    name="fecha"
+                    placeholder="Fecha"
+                    className="w-full px-4 py-4 md:px-5 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900 [color-scheme:light]"
+                    style={{ colorScheme: 'light' }}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">⏱️ Duración</label>
+                  <select
+                    name="duracion"
+                    className="w-full px-5 py-4 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900"
+                    required
+                  >
+                    <option value="">Selecciona duración</option>
+                    <option value="1-3">1-3 días</option>
+                    <option value="4-7">4-7 días</option>
+                    <option value="8-14">8-14 días</option>
+                    <option value="15+">15+ días</option>
+                  </select>
+                </div>
               </div>
 
               <textarea
