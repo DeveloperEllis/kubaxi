@@ -381,7 +381,8 @@ export default function Home() {
                 <input
                   type="date"
                   name="fecha"
-                  className="px-5 py-4 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                  className="px-4 py-4 md:px-5 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900 [color-scheme:light]"
+                  style={{ colorScheme: 'light' }}
                   required
                 />
                 <select

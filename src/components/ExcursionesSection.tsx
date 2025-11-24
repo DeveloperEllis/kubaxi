@@ -285,7 +285,8 @@ function ExcursionCard({ excursion }: { excursion: Excursion }) {
                   <input
                     type="date"
                     name="fecha"
-                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                    className="w-full px-3 py-3 text-sm md:px-4 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900 [color-scheme:light]"
+                    style={{ colorScheme: 'light' }}
                     required
                   />
                 </div>
