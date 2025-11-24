@@ -224,7 +224,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                 setTripTime('')
                 setHorarioColectivo(null)
               }}
-              className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             >
               <option value="colectivo">🚕 Colectivo</option>
@@ -239,28 +239,30 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
               value={cantidadPersonas}
               onChange={(e) => setCantidadPersonas(parseInt(e.target.value))}
               placeholder="👥 Personas"
-              className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             />
           </div>
 
           {/* Fecha */}
-          <div className="mb-3 relative">
-            {!tripDate && (
-              <span className="absolute left-4 top-3 text-gray-400 pointer-events-none z-10" style={{ fontSize: '16px' }}>
-                📅 Fecha del viaje
-              </span>
-            )}
-            <input
-              type="date"
-              value={tripDate}
-              onChange={(e) => setTripDate(e.target.value)}
-              onFocus={(e) => e.target.showPicker?.()}
-              min={new Date().toISOString().split('T')[0]}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 [color-scheme:light]"
-              style={{ colorScheme: 'light', fontSize: '16px' }}
-              required
-            />
+          <div className="mb-3">
+            <div className="relative">
+              {!tripDate && (
+                <span className="absolute left-4 top-3 text-gray-400 pointer-events-none z-10" style={{ fontSize: '16px' }}>
+                  📅 Fecha del viaje
+                </span>
+              )}
+              <input
+                type="date"
+                value={tripDate}
+                onChange={(e) => setTripDate(e.target.value)}
+                onFocus={(e) => e.target.showPicker?.()}
+                min={new Date().toISOString().split('T')[0]}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 [color-scheme:light]"
+                style={{ colorScheme: 'light', fontSize: '16px' }}
+                required
+              />
+            </div>
           </div>
 
           {/* Horario para Colectivo o Hora para Privado */}
