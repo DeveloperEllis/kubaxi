@@ -251,28 +251,28 @@ function PaqueteCard({ paquete, colorClass, buttonColor }: PaqueteCardProps) {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">📅 Fecha de inicio</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">📅 Fecha</label>
                   <input
                     type="date"
                     name="fecha"
-                    placeholder="Fecha"
-                    className="w-full px-3 py-3 text-sm md:px-4 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900 [color-scheme:light]"
-                    style={{ colorScheme: 'light' }}
+                    className="w-full px-2 py-2.5 text-sm border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900 [color-scheme:light]"
+                    style={{ colorScheme: 'light', fontSize: '16px' }}
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">👥 Personas</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">👥 Personas</label>
                   <input
                     type="number"
                     name="personas"
                     min="1"
                     defaultValue="1"
-                    placeholder="1"
-                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900"
+                    placeholder="Cant."
+                    className="w-full px-2 py-2.5 text-sm border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900"
+                    style={{ fontSize: '16px' }}
                     required
                   />
                 </div>

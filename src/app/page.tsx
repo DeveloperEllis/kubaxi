@@ -370,10 +370,11 @@ export default function Home() {
                 <input
                   type="number"
                   name="viajeros"
-                  placeholder="Ej: 2"
+                  placeholder="Cantidad de viajeros"
                   min="1"
                   defaultValue="1"
                   className="px-5 py-4 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900"
+                  style={{ fontSize: '16px' }}
                   required
                 />
               </div>
@@ -384,9 +385,8 @@ export default function Home() {
                   <input
                     type="date"
                     name="fecha"
-                    placeholder="Fecha"
                     className="w-full px-4 py-4 md:px-5 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900 [color-scheme:light]"
-                    style={{ colorScheme: 'light' }}
+                    style={{ colorScheme: 'light', fontSize: '16px' }}
                     required
                   />
                 </div>
