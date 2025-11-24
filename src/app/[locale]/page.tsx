@@ -4,6 +4,7 @@ import { useState, useEffect, FormEvent } from 'react';
 import TripRequestForm from '@/components/TripRequestForm';
 import ExcursionesSection from '@/components/ExcursionesSection';
 import PaquetesSection from '@/components/PaquetesSection';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { abrirWhatsApp } from '@/lib/whatsapp';
 
 export default function Home() {
@@ -50,12 +51,14 @@ export default function Home() {
               <span className="text-xl md:text-2xl font-bold text-blue-600">Kubaxi</span>
             </div>
 
-            {/* Botón Hamburguesa */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
-              aria-label="Menú"
-            >
+            {/* Language Switcher y Botón Hamburguesa */}
+            <div className="flex items-center gap-3">
+              <LanguageSwitcher />
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                aria-label="Menú"
+              >
               <svg
                 className="w-6 h-6 text-slate-700"
                 fill="none"

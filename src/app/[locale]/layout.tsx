@@ -1,0 +1,35 @@
+import type { Metadata } from 'next'
+import { NextIntlClientProvider } from 'next-intl'
+import { getMessages } from 'next-intl/server'
+import './globals.css'
+
+export const metadata: Metadata = {
+  title: 'Kubaxi - Tu Taxi en Cuba',
+  description: 'Reserva tu taxi en Cuba de manera fácil y rápida. Viajes locales e intermunicipales con los mejores precios.',
+  keywords: 'taxi, cuba, transporte, viajes, reserva, kubaxi',
+  openGraph: {
+    title: 'Kubaxi - Tu Taxi en Cuba',
+    description: 'Reserva tu taxi en Cuba de manera fácil y rápida.',
+    type: 'website',
+  },
+}
+
+export default async function RootLayout({
+  children,
+  params: { locale }
+}: {
+  children: React.ReactNode
+  params: { locale: string }
+}) {
+  const messages = await getMessages()
+
+  return (
+    <html lang={locale}>
+      <body>
+        <NextIntlClientProvider messages={messages}>
+          {children}
+        </NextIntlClientProvider>
+      </body>
+    </html>
+  )
+}
