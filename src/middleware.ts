@@ -9,6 +9,6 @@ export default createMiddleware({
 });
  
 export const config = {
-  // Matcher ignorando archivos internos de Next.js
-  matcher: ['/', '/(es|en|fr)/:path*']
+  // Matcher ignorando archivos internos de Next.js y estáticos
+  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)']
 };
