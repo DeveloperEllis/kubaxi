@@ -253,22 +253,24 @@ function PaqueteCard({ paquete, colorClass, buttonColor }: PaqueteCardProps) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="relative">
-                  <span className="absolute left-4 top-3 text-gray-400 pointer-events-none transition-opacity" style={{ fontSize: '16px' }} id="fecha-placeholder">
+                  <span className="absolute left-4 top-3 text-gray-400 pointer-events-none z-10" style={{ fontSize: '16px' }} id="paquete-fecha-placeholder">
                     📅 Fecha de inicio
                   </span>
                   <input
                     type="date"
                     name="fecha"
-                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900 [color-scheme:light]"
-                    style={{ colorScheme: 'light', fontSize: '16px' }}
+                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900 [color-scheme:light] relative z-20"
+                    style={{ colorScheme: 'light', fontSize: '16px', background: 'transparent' }}
                     onFocus={(e) => {
                       e.currentTarget.showPicker?.();
-                      const placeholder = e.currentTarget.previousElementSibling as HTMLElement;
-                      if (placeholder) placeholder.style.display = 'none';
+                      const placeholder = document.getElementById('paquete-fecha-placeholder');
+                      if (placeholder) placeholder.style.opacity = '0';
                     }}
                     onChange={(e) => {
-                      const placeholder = e.currentTarget.previousElementSibling as HTMLElement;
-                      if (placeholder) placeholder.style.display = 'none';
+                      const placeholder = document.getElementById('paquete-fecha-placeholder');
+                      if (placeholder && e.currentTarget.value) {
+                        placeholder.style.display = 'none';
+                      }
                     }}
                     required
                   />

@@ -30,7 +30,6 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
   
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [dateInputType, setDateInputType] = useState<'text' | 'date'>('text')
 
   // Search origen
   useEffect(() => {
@@ -247,21 +246,19 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
 
           {/* Fecha */}
           <div className="mb-3 relative">
+            {!tripDate && (
+              <span className="absolute left-4 top-3 text-gray-400 pointer-events-none z-10" style={{ fontSize: '16px' }}>
+                📅 Fecha del viaje
+              </span>
+            )}
             <input
-              type={dateInputType}
+              type="date"
               value={tripDate}
               onChange={(e) => setTripDate(e.target.value)}
-              onFocus={(e) => {
-                setDateInputType('date')
-                setTimeout(() => e.target.showPicker?.(), 50)
-              }}
-              onBlur={(e) => {
-                if (!e.target.value) setDateInputType('text')
-              }}
+              onFocus={(e) => e.target.showPicker?.()}
               min={new Date().toISOString().split('T')[0]}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 [color-scheme:light]"
               style={{ colorScheme: 'light', fontSize: '16px' }}
-              placeholder="📅 Fecha del viaje"
               required
             />
           </div>
