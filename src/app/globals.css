@@ -14,3 +14,14 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+input[type="date"],
+input[type="time"] {
+  -webkit-appearance: none;  /* Para Safari */
+  appearance: none;          /* Para otros navegadores */
+  padding-left: 16px;        /* Ajustar padding */
+  padding-right: 16px;       /* Ajustar padding */
+  font-size: 16px;           /* Ajuste de tamaño de fuente */
+  line-height: 1.5;          /* Ajuste de line-height */
+  min-width: 100%;           /* Asegurar que ocupe el 100% del ancho disponible */
+}
