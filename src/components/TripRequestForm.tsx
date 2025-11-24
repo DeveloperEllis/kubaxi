@@ -19,7 +19,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
   const [selectedDestino, setSelectedDestino] = useState<Ubicacion | null>(null)
   
   const [taxiType, setTaxiType] = useState<'colectivo' | 'privado'>('colectivo')
-  const [cantidadPersonas, setCantidadPersonas] = useState(1)
+  const [cantidadPersonas, setCantidadPersonas] = useState(0)
   const [tripDate, setTripDate] = useState('')
   const [tripTime, setTripTime] = useState('')
   const [horarioColectivo, setHorarioColectivo] = useState<'mañana' | 'tarde' | null>(null)
@@ -77,6 +77,11 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
 
     if (!tripDate) {
       setError('Por favor selecciona una fecha')
+      return
+    }
+
+    if (!cantidadPersonas || cantidadPersonas < 1) {
+      setError('Por favor ingresa la cantidad de personas')
       return
     }
 
@@ -224,6 +229,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                 setTripTime('')
                 setHorarioColectivo(null)
               }}
+        
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             >
@@ -236,10 +242,14 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
               type="number"
               min="1"
               max="15"
-              value={cantidadPersonas}
-              onChange={(e) => setCantidadPersonas(parseInt(e.target.value))}
+              value={cantidadPersonas || ''}
+              onChange={(e) => {
+                const value = parseInt(e.target.value);
+                setCantidadPersonas(value || 0);
+              }}
               placeholder="👥 Personas"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              style={{ fontSize: '16px' }}
               required
             />
           </div>
@@ -281,14 +291,22 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
             </div>
           ) : (
             <div className="mb-3">
-              <input
-                type="time"
-                value={tripTime}
-                onChange={(e) => setTripTime(e.target.value)}
-                placeholder="⏰ Hora"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
+              <div className="relative">
+                {!tripTime && (
+                  <span className="absolute left-4 top-3 text-gray-400 pointer-events-none z-10" style={{ fontSize: '16px' }}>
+                    ⏰ Hora del viaje
+                  </span>
+                )}
+                <input
+                  type="time"
+                  value={tripTime}
+                  onChange={(e) => setTripTime(e.target.value)}
+                  onFocus={(e) => e.target.showPicker?.()}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 [color-scheme:light]"
+                  style={{ colorScheme: 'light', fontSize: '16px' }}
+                  required
+                />
+              </div>
             </div>
           )}
 
