@@ -280,14 +280,24 @@ function ExcursionCard({ excursion }: { excursion: Excursion }) {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <div className="relative">
+                  <span className="absolute left-4 top-3 text-gray-400 pointer-events-none transition-opacity" style={{ fontSize: '16px' }}>
+                    📅 Fecha del viaje
+                  </span>
                   <input
                     type="date"
                     name="fecha"
                     className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900 [color-scheme:light]"
                     style={{ colorScheme: 'light', fontSize: '16px' }}
-                    placeholder="Fecha"
-                    onFocus={(e) => e.currentTarget.showPicker?.()}
+                    onFocus={(e) => {
+                      e.currentTarget.showPicker?.();
+                      const placeholder = e.currentTarget.previousElementSibling as HTMLElement;
+                      if (placeholder) placeholder.style.display = 'none';
+                    }}
+                    onChange={(e) => {
+                      const placeholder = e.currentTarget.previousElementSibling as HTMLElement;
+                      if (placeholder) placeholder.style.display = 'none';
+                    }}
                     required
                   />
                 </div>
