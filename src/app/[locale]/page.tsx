@@ -179,15 +179,15 @@ export default function Home() {
             <div className="hidden md:flex flex-wrap justify-center gap-6 md:gap-8 py-6">
               <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
                 <span className="text-2xl">✓</span>
-                <span className="text-sm md:text-base font-medium">Servicio 24/7</span>
+                <span className="text-sm md:text-base font-medium">{t('hero.feature1')}</span>
               </div>
               <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
                 <span className="text-2xl">✓</span>
-                <span className="text-sm md:text-base font-medium">Conductores Profesionales</span>
+                <span className="text-sm md:text-base font-medium">{t('hero.feature2')}</span>
               </div>
               <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
                 <span className="text-2xl">✓</span>
-                <span className="text-sm md:text-base font-medium">Precios Competitivos</span>
+                <span className="text-sm md:text-base font-medium">{t('hero.feature3')}</span>
               </div>
             </div>
 
@@ -447,10 +447,10 @@ export default function Home() {
               />
               <h3 className="text-2xl md:text-3xl font-bold">Kubaxi</h3>
             </div>
-            <p className="text-slate-300 text-lg">Tu transporte de confianza en Cuba</p>
+            <p className="text-slate-300 text-lg">{t('footer.description')}</p>
             <div className="pt-6 border-t border-slate-700">
               <p className="text-sm text-slate-400">
-                &copy; 2025 Kubaxi. Todos los derechos reservados.
+                &copy; 2025 Kubaxi. {t('footer.rights')}
               </p>
             </div>
           </div>

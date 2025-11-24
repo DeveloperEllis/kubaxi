@@ -12,7 +12,10 @@
     "taxiService": "Servicio de Taxi",
     "excursions": "Excursiones",
     "travelPackages": "Paquetes de Viaje",
-    "customTrip": "Viaje Personalizado"
+    "customTrip": "Viaje Personalizado",
+    "feature1": "Servicio 24/7",
+    "feature2": "Conductores Profesionales",
+    "feature3": "Precios Competitivos"
   },
   "tripForm": {
     "title": "Reserva tu Viaje",
