@@ -10,5 +10,12 @@ export default createMiddleware({
  
 export const config = {
   // Matcher ignorando archivos internos de Next.js y estáticos
-  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)']
+  matcher: [
+    // Incluir todas las rutas excepto las que empiezan con:
+    '/((?!api|_next|_vercel|.*\\..*).*)',
+    // Incluir la raíz
+    '/',
+    // Incluir rutas con locale
+    '/(es|en|fr)/:path*'
+  ]
 };
