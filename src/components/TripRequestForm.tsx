@@ -257,11 +257,13 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
           {/* Fecha */}
           <div className="mb-3">
             <div className="relative">
-              {!tripDate && (
-                <span className="absolute left-4 top-3 text-gray-400 pointer-events-none z-10" style={{ fontSize: '16px' }}>
-                  📅 Fecha del viaje
-                </span>
-              )}
+              <label className={`absolute left-3 transition-all duration-200 pointer-events-none ${
+                tripDate 
+                  ? 'top-0 -translate-y-1/2 text-xs bg-white px-1 text-blue-600' 
+                  : 'top-3 text-gray-400'
+              }`} style={{ fontSize: tripDate ? '12px' : '16px' }}>
+                📅 Fecha del viaje
+              </label>
               <input
                 type="date"
                 value={tripDate}
@@ -292,11 +294,13 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
           ) : (
             <div className="mb-3">
               <div className="relative">
-                {!tripTime && (
-                  <span className="absolute left-4 top-3 text-gray-400 pointer-events-none z-10" style={{ fontSize: '16px' }}>
-                    ⏰ Hora del viaje
-                  </span>
-                )}
+                <label className={`absolute left-3 transition-all duration-200 pointer-events-none ${
+                  tripTime 
+                    ? 'top-0 -translate-y-1/2 text-xs bg-white px-1 text-blue-600' 
+                    : 'top-3 text-gray-400'
+                }`} style={{ fontSize: tripTime ? '12px' : '16px' }}>
+                  ⏰ Hora del viaje
+                </label>
                 <input
                   type="time"
                   value={tripTime}
