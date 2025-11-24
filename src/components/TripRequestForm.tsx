@@ -246,14 +246,15 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
 
           {/* Fecha */}
           <div className="mb-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">📅 Fecha del viaje</label>
             <input
               type="date"
               value={tripDate}
               onChange={(e) => setTripDate(e.target.value)}
               min={new Date().toISOString().split('T')[0]}
-              className="w-full px-3 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 [color-scheme:light]"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 [color-scheme:light]"
               style={{ colorScheme: 'light', fontSize: '16px' }}
+              placeholder="Fecha del viaje"
+              onFocus={(e) => e.target.showPicker?.()}
               required
             />
           </div>

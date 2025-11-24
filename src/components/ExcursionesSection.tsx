@@ -279,27 +279,27 @@ function ExcursionCard({ excursion }: { excursion: Excursion }) {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">📅 Fecha</label>
                   <input
                     type="date"
                     name="fecha"
-                    className="w-full px-2 py-2.5 text-sm border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900 [color-scheme:light]"
+                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900 [color-scheme:light]"
                     style={{ colorScheme: 'light', fontSize: '16px' }}
+                    placeholder="Fecha"
+                    onFocus={(e) => e.currentTarget.showPicker?.()}
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">👥 Personas</label>
                   <input
                     type="number"
                     name="personas"
                     min="1"
                     defaultValue="1"
-                    placeholder="Cant."
-                    className="w-full px-2 py-2.5 text-sm border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900"
+                    placeholder="Cant. personas"
+                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900"
                     style={{ fontSize: '16px' }}
                     required
                   />
