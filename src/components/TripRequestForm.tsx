@@ -26,6 +26,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
   const [tripDate, setTripDate] = useState('')
   const [tripTime, setTripTime] = useState('')
   const [horarioColectivo, setHorarioColectivo] = useState<'mañana' | 'tarde' | null>(null)
+  const [isOrienteRoute, setIsOrienteRoute] = useState(false)
   
   const [price, setPrice] = useState<number | null>(null)
   const [distance, setDistance] = useState<number | null>(null)
@@ -51,6 +52,22 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
       setDestinoSuggestions([])
     }
   }, [destinoSearch])
+
+  // Detectar si origen o destino son de Oriente usando el campo region
+  useEffect(() => {
+    
+    const esOriente = Boolean(
+      (selectedOrigen && selectedOrigen.region?.toLowerCase() === 'oriente') ||
+      (selectedDestino && selectedDestino.region?.toLowerCase() === 'oriente')
+    )
+    
+    setIsOrienteRoute(esOriente)
+    
+    if (esOriente && taxiType === 'colectivo') {
+      setTaxiType('privado')
+      setHorarioColectivo(null)
+    }
+  }, [selectedOrigen, selectedDestino, taxiType])
 
   // Calculate price when all required fields are filled
   useEffect(() => {
@@ -145,6 +162,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
 
   return (
     <div className="w-full">
+      
       {/* Form */}
       <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-lg p-6">
           {error && (
@@ -163,9 +181,24 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                 setSelectedOrigen(null)
               }}
               placeholder={`📍 ${t('origin')}`}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             />
+            {(selectedOrigen || origenSearch) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedOrigen(null)
+                  setOrigenSearch('')
+                  setOrigenSuggestions([])
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
             {origenSuggestions.length > 0 && !selectedOrigen && (
               <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
                 {origenSuggestions.map((ubicacion) => (
@@ -197,9 +230,24 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                 setSelectedDestino(null)
               }}
               placeholder={`🎯 ${t('destination')}`}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             />
+            {(selectedDestino || destinoSearch) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedDestino(null)
+                  setDestinoSearch('')
+                  setDestinoSuggestions([])
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
             {destinoSuggestions.length > 0 && !selectedDestino && (
               <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
                 {destinoSuggestions.map((ubicacion) => (
@@ -221,6 +269,16 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
             )}
           </div>
 
+          {/* Mensaje de advertencia para rutas de Oriente */}
+          {isOrienteRoute && (
+            <div className="mb-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 p-3 rounded-lg flex items-center gap-2">
+              <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+              </svg>
+              <span className="font-medium">Solo taxis privados disponibles para rutas de Oriente</span>
+            </div>
+          )}
+
           {/* Grid para campos compactos */}
           <div className="grid grid-cols-2 gap-3 mb-3">
             {/* Tipo de Taxi */}
@@ -232,13 +290,14 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                 setTripTime('')
                 setHorarioColectivo(null)
               }}
-        
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              disabled={isOrienteRoute}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
               required
             >
-              <option value="colectivo">🚕 {t('collective')}</option>
+              <option value="colectivo" disabled={isOrienteRoute}>🚕 {t('collective')}</option>
               <option value="privado">🚗 {t('private')}</option>
             </select>
+           
 
             {/* Cantidad de Personas */}
             <input
@@ -317,21 +376,21 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
             </div>
           )}
 
-          {/* Price Summary - Compacto */}
+          {/* Price Summary - Diseño simple */}
           {price !== null && distance !== null && estimatedTime !== null && (
-            <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
-              <div className="grid grid-cols-3 gap-2 text-center text-sm">
+            <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="grid grid-cols-3 gap-3 text-center text-sm">
                 <div>
-                  <div className="text-gray-600 text-xs">{t('distance')}</div>
+                  <div className="text-gray-600 text-xs mb-1">{t('distance')}</div>
                   <div className="font-bold text-gray-900">{distance} km</div>
                 </div>
                 <div>
-                  <div className="text-gray-600 text-xs">{t('time')}</div>
+                  <div className="text-gray-600 text-xs mb-1">{t('time')}</div>
                   <div className="font-bold text-gray-900">{estimatedTime} min</div>
                 </div>
                 <div>
-                  <div className="text-gray-600 text-xs">{t('price')}</div>
-                  <div className="font-bold text-blue-600">${price}</div>
+                  <div className="text-gray-600 text-xs mb-1">{t('price')}</div>
+                  <div className="font-bold text-blue-600 text-lg">${price}</div>
                 </div>
               </div>
             </div>
