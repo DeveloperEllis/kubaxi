@@ -2,6 +2,25 @@ import { supabase } from './supabase'
 import { Ubicacion, PriceCalculation } from '@/types'
 
 /**
+ * Función de redondeo personalizado (misma lógica que Supabase)
+ * - Si termina en 5 → deja el número tal cual
+ * - Si termina en 6,7,8,9 → sube a la decena siguiente
+ * - Si termina en 0-4 → baja a la decena inferior
+ */
+function redondeoPersonalizado(valor: number): number {
+  const entero = Math.floor(valor)
+  const unidad = entero % 10
+
+  if (unidad === 5) {
+    return entero
+  } else if (unidad >= 6) {
+    return Math.floor(entero / 10 + 1) * 10
+  } else {
+    return Math.floor(entero / 10) * 10
+  }
+}
+
+/**
  * Obtiene todas las ubicaciones disponibles desde Supabase
  */
 export async function getUbicaciones(): Promise<Ubicacion[]> {
@@ -76,7 +95,9 @@ export async function calculatePrice(
 
     if (taxiType === 'colectivo') {
       // Para colectivo: (precio_base / 4) * cantidad_personas
-      price = (base_price / 4) * cantidadPersonas
+      const precioColectivo = (base_price / 4) * cantidadPersonas
+      // Aplicar redondeo personalizado
+      price = redondeoPersonalizado(precioColectivo)
     } else {
       // Para privado: si <= 4 personas usar precio base, si no (precio_base / 4) * personas
       if (cantidadPersonas <= 4) {
@@ -84,10 +105,9 @@ export async function calculatePrice(
       } else {
         price = (base_price / 4) * cantidadPersonas
       }
+      // Redondear precio privado a 2 decimales
+      price = Math.round(price * 100) / 100
     }
-
-    // Redondear precio a 2 decimales
-    price = Math.round(price * 100) / 100
 
     return {
       price,
