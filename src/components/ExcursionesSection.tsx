@@ -139,19 +139,41 @@ function ExcursionCard({ excursion }: { excursion: Excursion }) {
   const calculatePrice = (personas: number): number => {
     const minPax = excursion.min_pax || 1
     const precioPorPax = excursion.precio_por_pax || 0
+    const umbralNivel2 = excursion.umbral_nivel2
+    const precioPorPaxNivel2 = excursion.precio_por_pax_nivel2
     
     // If no precio_por_pax is set, return base price
     if (!precioPorPax) {
       return excursion.precio
     }
     
-    // Base price covers min_pax, additional people pay precio_por_pax
+    // Base price covers min_pax
     if (personas <= minPax) {
       return excursion.precio
     }
     
     const personasExtra = personas - minPax
-    return excursion.precio + (personasExtra * precioPorPax)
+    
+    // Si no hay segundo nivel de precio, usar precio normal
+    if (!umbralNivel2 || !precioPorPaxNivel2) {
+      return excursion.precio + (personasExtra * precioPorPax)
+    }
+    
+    // Si no alcanza el umbral del nivel 2, usar precio normal
+    if (personas <= umbralNivel2) {
+      return excursion.precio + (personasExtra * precioPorPax)
+    }
+    
+    // Calcular con dos niveles de precio
+    // Primero: desde min_pax hasta umbral_nivel2 con precio_por_pax
+    const personasNivel1 = umbralNivel2 - minPax
+    const precioNivel1 = personasNivel1 * precioPorPax
+    
+    // Segundo: desde umbral_nivel2 hasta personas con precio_por_pax_nivel2
+    const personasNivel2 = personas - umbralNivel2
+    const precioNivel2 = personasNivel2 * precioPorPaxNivel2
+    
+    return excursion.precio + precioNivel1 + precioNivel2
   }
   
   const precioCalculado = calculatePrice(numPersonas)
@@ -371,9 +393,22 @@ function ExcursionCard({ excursion }: { excursion: Excursion }) {
                       Precio base ({excursion.min_pax || 1} pax): ${excursion.precio}
                     </p>
                     {numPersonas > (excursion.min_pax || 1) && (
-                      <p className="text-xs text-blue-700">
-                        + {numPersonas - (excursion.min_pax || 1)} personas extra × ${excursion.precio_por_pax}
-                      </p>
+                      <>
+                        {excursion.umbral_nivel2 && excursion.precio_por_pax_nivel2 && numPersonas > excursion.umbral_nivel2 ? (
+                          <>
+                            <p className="text-xs text-blue-700">
+                              + {excursion.umbral_nivel2 - (excursion.min_pax || 1)} personas × ${excursion.precio_por_pax}
+                            </p>
+                            <p className="text-xs text-blue-700">
+                              + {numPersonas - excursion.umbral_nivel2} personas × ${excursion.precio_por_pax_nivel2}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-xs text-blue-700">
+                            + {numPersonas - (excursion.min_pax || 1)} personas extra × ${excursion.precio_por_pax}
+                          </p>
+                        )}
+                      </>
                     )}
                     <p className="text-sm text-blue-800 font-medium pt-2 border-t border-blue-200">
                       💰 {t('price')} <span className="text-lg font-bold">${precioCalculado}</span>

@@ -43,6 +43,8 @@ export interface Excursion {
   precio_por_pax?: number
   min_pax?: number
   max_pax?: number
+  precio_por_pax_nivel2?: number
+  umbral_nivel2?: number
   imagen_url?: string
 }
 
