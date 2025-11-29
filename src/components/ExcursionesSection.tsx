@@ -169,6 +169,7 @@ function ExcursionCard({ excursion }: { excursion: Excursion }) {
         excursion: titulo,
         fecha: formData.get('fecha'),
         personas: formData.get('personas'),
+        precio: precioCalculado,
         comentarios: formData.get('comentarios') || 'Sin comentarios'
       }
     })

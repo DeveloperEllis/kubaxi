@@ -48,6 +48,7 @@ function formatearReservaTaxi(datos: any): string {
 📅 Fecha: ${datos.fecha || 'N/A'}
 ⏰ Hora: ${datos.hora || 'N/A'}
 👥 Pasajeros: ${datos.pasajeros || 'N/A'}
+💰 Precio Total: $${datos.precio || 'N/A'}
 
 `;
 }
@@ -64,6 +65,7 @@ function formatearExcursion(datos: any): string {
 🏝️ Excursión: ${datos.excursion || 'N/A'}
 📅 Fecha: ${datos.fecha || 'N/A'}
 👥 Personas: ${datos.personas || 'N/A'}
+💰 Precio Total: $${datos.precio || 'N/A'}
 
 💬 *Comentarios:*
 ${datos.comentarios || 'Sin comentarios'}`;
@@ -81,6 +83,7 @@ function formatearPaquete(datos: any): string {
 🎁 Paquete: ${datos.paquete || 'N/A'}
 📅 Fecha: ${datos.fecha || 'N/A'}
 👥 Personas: ${datos.personas || 'N/A'}
+💰 Precio Total: $${datos.precio || 'N/A'}
 
 💬 *Comentarios:*
 ${datos.comentarios || 'Sin comentarios'}`;
@@ -94,6 +97,7 @@ function formatearPersonalizado(datos: any): string {
 📧 Email: ${datos.email || 'N/A'}
 📱 Teléfono: ${datos.telefono || 'N/A'}
 👥 Viajeros: ${datos.viajeros || 'N/A'}
+
 
 🗓️ *Detalles del Viaje:*
 📅 Fecha: ${datos.fecha || 'N/A'}
