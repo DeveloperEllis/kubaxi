@@ -40,9 +40,10 @@ export interface Excursion {
   descripcion_fr?: string
   ubicacion: string
   precio: number
+  precio_por_pax?: number
+  min_pax?: number
+  max_pax?: number
   imagen_url?: string
-  duracion?: string
-  hr_salida?: string
 }
 
 export interface PaqueteViaje {

@@ -114,6 +114,35 @@
     "contact": "Contact",
     "terms": "Terms and Conditions",
     "followUs": "Follow Us",
-    "rights": "All rights reserved"
+    "rights": "All rights reserved",
+    "location": "Havana, Cuba",
+    "agencyInfo": "Agency Information",
+    "facebook": "Follow us on Facebook",
+    "instagram": "Follow us on Instagram",
+    "whatsapp": "Contact us on WhatsApp"
+  },
+  "about": {
+    "intro": "is a tourist transportation agency with more than",
+    "yearsExperience": "years of experience serving travelers from around the world. We specialize in offering private and collective taxi services, personalized excursions, and tour packages throughout Cuba. Our commitment is to provide quality, safe, and reliable service so you can make the most of your experience on the island.",
+    "privateTaxi": "Private Taxi",
+    "privateTaxiDesc": "Exclusive and comfortable transportation for you and your group, with modern vehicles and professional drivers.",
+    "collectiveTaxi": "Collective Taxi",
+    "collectiveTaxiDesc": "Economical option for individual travelers, sharing the trip with other passengers on the most popular routes.",
+    "excursions": "Excursions",
+    "excursionsDesc": "Guided tours to Cuba's most emblematic places, including beaches, historic cities, and natural sites.",
+    "packages": "Tour Packages",
+    "packagesDesc": "Complete multi-day plans with accommodation, transportation, and activities included for a worry-free experience.",
+    "contactWhatsApp": "Contact via WhatsApp",
+    "whyChoose": "Why choose us?",
+    "experience": "Experience:",
+    "experienceDesc": "years in the Cuban tourism sector",
+    "safety": "Safety:",
+    "safetyDesc": "Professional drivers and vehicles in optimal condition",
+    "flexibility": "Flexibility:",
+    "flexibilityDesc": "Schedules adapted to your needs",
+    "fairPrices": "Fair prices:",
+    "fairPricesDesc": "Competitive rates with no surprises",
+    "support247": "24/7 Support:",
+    "support247Desc": "Available when you need us"
   }
 }

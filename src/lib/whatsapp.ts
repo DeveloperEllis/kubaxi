@@ -1,3 +1,5 @@
+import { APP_NAME } from './constants';
+
 // Configuración para envío de WhatsApp
 const WHATSAPP_NUMBER = '5352375007'; // Sin el signo +
 
@@ -38,7 +40,7 @@ export function abrirWhatsApp(mensaje: WhatsAppMessage) {
 }
 
 function formatearReservaTaxi(datos: any): string {
-  return `🚕 *RESERVA DE TAXI - KUBAXI*
+  return `🚕 *RESERVA DE TAXI - ${APP_NAME.toUpperCase()}*
 
 🗺️ *Detalles del Viaje:*
 📍 Origen: ${datos.origen || 'N/A'}
@@ -51,7 +53,7 @@ function formatearReservaTaxi(datos: any): string {
 }
 
 function formatearExcursion(datos: any): string {
-  return `🏝️ *RESERVA DE EXCURSIÓN - KUBAXI*
+  return `🏝️ *RESERVA DE EXCURSIÓN - ${APP_NAME.toUpperCase()}*
 
 📋 *Información del Cliente:*
 👤 Nombre: ${datos.nombre || 'N/A'}
@@ -68,7 +70,7 @@ ${datos.comentarios || 'Sin comentarios'}`;
 }
 
 function formatearPaquete(datos: any): string {
-  return `📦 *RESERVA DE PAQUETE - KUBAXI*
+  return `📦 *RESERVA DE PAQUETE - ${APP_NAME.toUpperCase()}*
 
 📋 *Información del Cliente:*
 👤 Nombre: ${datos.nombre || 'N/A'}
@@ -85,7 +87,7 @@ ${datos.comentarios || 'Sin comentarios'}`;
 }
 
 function formatearPersonalizado(datos: any): string {
-  return `✨ *SOLICITUD PERSONALIZADA - KUBAXI*
+  return `✨ *SOLICITUD PERSONALIZADA - ${APP_NAME.toUpperCase()}*
 
 📋 *Información del Cliente:*
 👤 Nombre: ${datos.nombre || 'N/A'}

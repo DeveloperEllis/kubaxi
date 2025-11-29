@@ -1,14 +1,15 @@
 import type { Metadata } from 'next'
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessages } from 'next-intl/server'
+import { APP_NAME } from '@/lib/constants'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Kubaxi - Tu Taxi en Cuba',
+  title: `${APP_NAME} - Tu Taxi en Cuba`,
   description: 'Reserva tu taxi en Cuba de manera fácil y rápida. Viajes locales e intermunicipales con los mejores precios.',
-  keywords: 'taxi, cuba, transporte, viajes, reserva, kubaxi',
+  keywords: `taxi, cuba, transporte, viajes, reserva, ${APP_NAME.toLowerCase()}`,
   openGraph: {
-    title: 'Kubaxi - Tu Taxi en Cuba',
+    title: `${APP_NAME} - Tu Taxi en Cuba`,
     description: 'Reserva tu taxi en Cuba de manera fácil y rápida.',
     type: 'website',
   },

@@ -114,6 +114,35 @@
     "contact": "Contacto",
     "terms": "Términos y Condiciones",
     "followUs": "Síguenos",
-    "rights": "Todos los derechos reservados"
+    "rights": "Todos los derechos reservados",
+    "location": "La Habana, Cuba",
+    "agencyInfo": "Información de la Agencia",
+    "facebook": "Síguenos en Facebook",
+    "instagram": "Síguenos en Instagram",
+    "whatsapp": "Contáctanos por WhatsApp"
+  },
+  "about": {
+    "intro": "es una agencia de transporte turístico con más de",
+    "yearsExperience": "años de experiencia sirviendo a viajeros de todo el mundo. Nos especializamos en ofrecer servicios de taxi privado y colectivo, excursiones personalizadas y paquetes turísticos por toda Cuba. Nuestro compromiso es brindar un servicio de calidad, seguro y confiable para que disfrutes al máximo tu experiencia en la isla.",
+    "privateTaxi": "Taxi Privado",
+    "privateTaxiDesc": "Transporte exclusivo y cómodo para ti y tu grupo, con vehículos modernos y conductores profesionales.",
+    "collectiveTaxi": "Taxi Colectivo",
+    "collectiveTaxiDesc": "Opción económica para viajeros individuales, compartiendo el viaje con otros pasajeros en las rutas más populares.",
+    "excursions": "Excursiones",
+    "excursionsDesc": "Tours guiados a los lugares más emblemáticos de Cuba, incluyendo playas, ciudades históricas y sitios naturales.",
+    "packages": "Paquetes Turísticos",
+    "packagesDesc": "Planes completos de varios días con alojamiento, transporte y actividades incluidas para una experiencia sin preocupaciones.",
+    "contactWhatsApp": "Contactar por WhatsApp",
+    "whyChoose": "¿Por qué elegirnos?",
+    "experience": "Experiencia:",
+    "experienceDesc": "años en el sector turístico cubano",
+    "safety": "Seguridad:",
+    "safetyDesc": "Conductores profesionales y vehículos en óptimas condiciones",
+    "flexibility": "Flexibilidad:",
+    "flexibilityDesc": "Horarios adaptados a tus necesidades",
+    "fairPrices": "Precios justos:",
+    "fairPricesDesc": "Tarifas competitivas sin sorpresas",
+    "support247": "Atención 24/7:",
+    "support247Desc": "Disponibles cuando nos necesites"
   }
 }

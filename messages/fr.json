@@ -114,6 +114,35 @@
     "contact": "Contact",
     "terms": "Termes et Conditions",
     "followUs": "Suivez-nous",
-    "rights": "Tous droits réservés"
+    "rights": "Tous droits réservés",
+    "location": "La Havane, Cuba",
+    "agencyInfo": "Informations sur l'Agence",
+    "facebook": "Suivez-nous sur Facebook",
+    "instagram": "Suivez-nous sur Instagram",
+    "whatsapp": "Contactez-nous sur WhatsApp"
+  },
+  "about": {
+    "intro": "est une agence de transport touristique avec plus de",
+    "yearsExperience": "ans d'expérience au service de voyageurs du monde entier. Nous sommes spécialisés dans les services de taxi privé et collectif, les excursions personnalisées et les forfaits touristiques à travers Cuba. Notre engagement est de fournir un service de qualité, sûr et fiable pour que vous profitiez au maximum de votre expérience sur l'île.",
+    "privateTaxi": "Taxi Privé",
+    "privateTaxiDesc": "Transport exclusif et confortable pour vous et votre groupe, avec des véhicules modernes et des chauffeurs professionnels.",
+    "collectiveTaxi": "Taxi Collectif",
+    "collectiveTaxiDesc": "Option économique pour les voyageurs individuels, partageant le trajet avec d'autres passagers sur les itinéraires les plus populaires.",
+    "excursions": "Excursions",
+    "excursionsDesc": "Visites guidées des lieux les plus emblématiques de Cuba, y compris les plages, les villes historiques et les sites naturels.",
+    "packages": "Forfaits Touristiques",
+    "packagesDesc": "Plans complets de plusieurs jours avec hébergement, transport et activités inclus pour une expérience sans souci.",
+    "contactWhatsApp": "Contacter via WhatsApp",
+    "whyChoose": "Pourquoi nous choisir?",
+    "experience": "Expérience:",
+    "experienceDesc": "ans dans le secteur touristique cubain",
+    "safety": "Sécurité:",
+    "safetyDesc": "Chauffeurs professionnels et véhicules en condition optimale",
+    "flexibility": "Flexibilité:",
+    "flexibilityDesc": "Horaires adaptés à vos besoins",
+    "fairPrices": "Prix justes:",
+    "fairPricesDesc": "Tarifs compétitifs sans surprises",
+    "support247": "Support 24/7:",
+    "support247Desc": "Disponibles quand vous avez besoin de nous"
   }
 }
