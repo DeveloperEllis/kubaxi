@@ -270,6 +270,7 @@ function PaqueteCard({ paquete, colorClass, buttonColor }: PaqueteCardProps) {
                   <input
                     type="date"
                     name="fecha"
+                    min={new Date().toISOString().split('T')[0]}
                     className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900 [color-scheme:light] relative z-20"
                     style={{ colorScheme: 'light', fontSize: '16px', background: 'transparent' }}
                     onFocus={(e) => {
