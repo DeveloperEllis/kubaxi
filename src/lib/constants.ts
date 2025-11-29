@@ -24,4 +24,4 @@ export const COMPANY_INFO = {
   logoPath: '/icono_apk.png'
 };
 
-export const APP_NAME = 'Kubaxi';
+export const APP_NAME = 'RuTaxis';
