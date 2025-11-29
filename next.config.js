@@ -6,7 +6,13 @@ const withNextIntl = require('next-intl/plugin')(
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: [],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.supabase.co',
+        pathname: '/storage/**',
+      },
+    ],
   },
 }
 

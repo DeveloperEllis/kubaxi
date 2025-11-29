@@ -184,6 +184,8 @@ function ExcursionCard({ excursion }: { excursion: Excursion }) {
           <img
             src={excursion.imagen_url}
             alt={titulo}
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover"
           />
         ) : (
