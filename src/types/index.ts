@@ -70,3 +70,15 @@ export interface PaqueteViaje {
   activo?: boolean
   orden?: number
 }
+
+export interface CircuitoPersonalizado {
+  ciudades: number[] // IDs de ubicaciones
+  cantidadPersonas: number
+  necesitaAlojamiento: boolean
+  cantidadHabitaciones?: number
+  diasAlojamiento?: number
+  precioTransporte: number
+  precioAlojamiento: number
+  precioTotal: number
+  distanciaTotal: number
+}

@@ -5,7 +5,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import Link from 'next/link';
 import TripRequestForm from '@/components/TripRequestForm';
 import ExcursionesSection from '@/components/ExcursionesSection';
-import PaquetesSection from '@/components/PaquetesSection';
+import CircuitoPersonalizadoSection from '@/components/CircuitoPersonalizadoSection';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { abrirWhatsApp } from '@/lib/whatsapp';
 import { CONTACT_INFO, SOCIAL_MEDIA, COMPANY_INFO, APP_NAME } from '@/lib/constants';
@@ -111,14 +111,14 @@ export default function Home() {
                 🏝️ {t('hero.excursions')}
               </button>
               <button
-                onClick={() => scrollToSection('paquetes')}
+                onClick={() => scrollToSection('circuito')}
                 className={`px-4 py-3 rounded-lg text-left font-semibold transition-colors ${
-                  activeSection === 'paquetes'
+                  activeSection === 'circuito'
                     ? 'bg-blue-600 text-white'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
-                📦 {t('hero.travelPackages')}
+                🗺️ {t('hero.customCircuit', { defaultValue: 'Circuito Personalizado' })}
               </button>
               <button
                 onClick={() => scrollToSection('personalizado')}
@@ -224,16 +224,16 @@ export default function Home() {
                   </span>
                 </button>
                 <button
-                  onClick={() => scrollToSection('paquetes')}
+                  onClick={() => scrollToSection('circuito')}
                   className={`px-5 md:px-8 py-3.5 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 ${
-                    activeSection === 'paquetes'
+                    activeSection === 'circuito'
                       ? 'bg-white text-blue-600 shadow-xl'
                       : 'bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border border-white/20'
                   }`}
                 >
                   <span className="flex items-center justify-center gap-2">
-                    <span className="text-lg">📦</span>
-                    <span className="text-sm md:text-base">{t('hero.travelPackages')}</span>
+                    <span className="text-lg">🗺️</span>
+                    <span className="text-sm md:text-base">{t('hero.customCircuit', { defaultValue: 'Circuito Personalizado' })}</span>
                   </span>
                 </button>
                 <button
@@ -319,8 +319,8 @@ export default function Home() {
       {/* Excursiones Section - Dinámico */}
       <ExcursionesSection />
 
-      {/* Paquetes Section - Dinámico */}
-      <PaquetesSection />
+      {/* Circuito Personalizado Section */}
+      <CircuitoPersonalizadoSection />
 
       {/* Personalizado Section */}
       <section id="personalizado" className="py-16 md:py-20 px-4 bg-gradient-to-br from-slate-50 to-slate-100 scroll-mt-4">

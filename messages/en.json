@@ -8,10 +8,11 @@
   },
   "hero": {
     "title": "Your Trusted Taxi in Cuba",
-    "subtitle": "Travel comfortably and safely across the island",
+    "subtitle": "Travel comfortably and safely around the island",
     "taxiService": "Taxi Service",
     "excursions": "Excursions",
     "travelPackages": "Travel Packages",
+    "customCircuit": "Custom Circuit",
     "customTrip": "Custom Trip",
     "feature1": "24/7 Service",
     "feature2": "Professional Drivers",

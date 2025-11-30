@@ -8,10 +8,11 @@
   },
   "hero": {
     "title": "Votre Taxi de Confiance à Cuba",
-    "subtitle": "Voyagez confortablement et en toute sécurité à travers l'île",
+    "subtitle": "Voyagez confortablement et en toute sécurité dans toute l'île",
     "taxiService": "Service de Taxi",
     "excursions": "Excursions",
-    "travelPackages": "Forfaits Voyage",
+    "travelPackages": "Forfaits de Voyage",
+    "customCircuit": "Circuit Personnalisé",
     "customTrip": "Voyage Personnalisé",
     "feature1": "Service 24/7",
     "feature2": "Chauffeurs Professionnels",

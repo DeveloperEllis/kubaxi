@@ -25,6 +25,9 @@ export function abrirWhatsApp(mensaje: WhatsAppMessage) {
     case 'personalizado':
       textoMensaje = formatearPersonalizado(mensaje.datos);
       break;
+    case 'circuito_personalizado':
+      textoMensaje = formatearCircuitoPersonalizado(mensaje.datos);
+      break;
     default:
       textoMensaje = JSON.stringify(mensaje.datos, null, 2);
   }
@@ -105,4 +108,32 @@ function formatearPersonalizado(datos: any): string {
 
 📝 *Descripción:*
 ${datos.descripcion || 'Sin descripción'}`;
+}
+
+function formatearCircuitoPersonalizado(datos: any): string {
+  return `🗺️ *CIRCUITO PERSONALIZADO - ${APP_NAME.toUpperCase()}*
+
+📋 *Información del Cliente:*
+👤 Nombre: ${datos.nombre || 'N/A'}
+📧 Email: ${datos.email || 'N/A'}
+📱 Teléfono: ${datos.telefono || 'N/A'}
+
+🚗 *Detalles del Circuito:*
+📍 Ruta: ${datos.ruta || 'N/A'}
+👥 Personas: ${datos.personas || 'N/A'}
+📏 Distancia Total: ${datos.distancia} km
+
+🏨 *Alojamiento:*
+¿Necesita alojamiento?: ${datos.alojamiento}
+${datos.alojamiento === 'Sí' ? `🛏️ Detalle: ${datos.detalleAlojamiento}` : ''}
+
+💰 *Precios:*
+🚕 Transporte (24hrs): $${datos.precioTransporte}
+🏨 Alojamiento: $${datos.precioAlojamiento}
+💵 *TOTAL: $${datos.precioTotal}*
+
+💬 *Comentarios:*
+${datos.comentarios || 'Sin comentarios'}
+
+ℹ️ _Incluye taxi disponible las 24 horas durante todo el circuito_`;
 }
