@@ -119,9 +119,14 @@ function formatearCircuitoPersonalizado(datos: any): string {
 📱 Teléfono: ${datos.telefono || 'N/A'}
 
 🚗 *Detalles del Circuito:*
-📍 Ruta: ${datos.ruta || 'N/A'}
+🚕 Punto de Recogida: ${datos.puntoRecogida || 'N/A'}
+🏁 Destino Final: ${datos.destinoFinal || 'N/A'}
 👥 Personas: ${datos.personas || 'N/A'}
+📅 Duración: ${datos.dias} días
 📏 Distancia Total: ${datos.distancia} km
+
+📍 *Itinerario:*
+${datos.ruta || 'N/A'}
 
 🏨 *Alojamiento:*
 ¿Necesita alojamiento?: ${datos.alojamiento}

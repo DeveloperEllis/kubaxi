@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { searchUbicaciones, calculatePrice } from '@/lib/services'
+import { calculatePrice } from '@/lib/services'
 import { abrirWhatsApp } from '@/lib/whatsapp'
+import { supabase } from '@/lib/supabase'
 import { Ubicacion } from '@/types'
 
 interface TripRequestFormProps {
@@ -14,12 +15,16 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
   const t = useTranslations('tripForm')
   
   // Form state
+  const [todasUbicaciones, setTodasUbicaciones] = useState<Ubicacion[]>([])
   const [origenSearch, setOrigenSearch] = useState('')
   const [destinoSearch, setDestinoSearch] = useState('')
   const [origenSuggestions, setOrigenSuggestions] = useState<Ubicacion[]>([])
   const [destinoSuggestions, setDestinoSuggestions] = useState<Ubicacion[]>([])
+  const [showOrigenDropdown, setShowOrigenDropdown] = useState(false)
+  const [showDestinoDropdown, setShowDestinoDropdown] = useState(false)
   const [selectedOrigen, setSelectedOrigen] = useState<Ubicacion | null>(null)
   const [selectedDestino, setSelectedDestino] = useState<Ubicacion | null>(null)
+  const [filtroTipo, setFiltroTipo] = useState<string>('municipios')
   
   const [taxiType, setTaxiType] = useState<'colectivo' | 'privado'>('colectivo')
   const [cantidadPersonas, setCantidadPersonas] = useState(0)
@@ -35,23 +40,83 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Search origen
+  // Cargar todas las ubicaciones al inicio
   useEffect(() => {
-    if (origenSearch.length >= 2) {
-      searchUbicaciones(origenSearch).then(setOrigenSuggestions)
-    } else {
-      setOrigenSuggestions([])
+    const cargarUbicaciones = async () => {
+      const { data } = await supabase
+        .from('ubicaciones_cuba')
+        .select('*')
+        .order('nombre', { ascending: true })
+      
+      if (data) {
+        setTodasUbicaciones(data)
+      }
     }
-  }, [origenSearch])
+    
+    cargarUbicaciones()
+  }, [])
 
-  // Search destino
+  // Actualizar sugerencias de origen cuando cambia el filtro o la búsqueda
   useEffect(() => {
-    if (destinoSearch.length >= 2) {
-      searchUbicaciones(destinoSearch).then(setDestinoSuggestions)
-    } else {
-      setDestinoSuggestions([])
+    let ubicacionesFiltradas = todasUbicaciones
+    
+    // Aplicar filtro de tipo
+    if (filtroTipo === 'municipios') {
+      ubicacionesFiltradas = ubicacionesFiltradas.filter(
+        u => u.tipo?.toLowerCase() === 'municipio' || u.tipo?.toLowerCase() === 'municipio turistico'
+      )
+    } else if (filtroTipo === 'cayo') {
+      ubicacionesFiltradas = ubicacionesFiltradas.filter(
+        u => u.tipo?.toLowerCase() === 'cayo'
+      )
+    } else if (filtroTipo === 'aeropuerto') {
+      ubicacionesFiltradas = ubicacionesFiltradas.filter(
+        u => u.tipo?.toLowerCase() === 'aeropuerto'
+      )
     }
-  }, [destinoSearch])
+    
+    // Aplicar búsqueda
+    if (origenSearch.trim()) {
+      const searchLower = origenSearch.toLowerCase()
+      ubicacionesFiltradas = ubicacionesFiltradas.filter(u =>
+        u.nombre.toLowerCase().includes(searchLower) ||
+        u.provincia?.toLowerCase().includes(searchLower)
+      )
+    }
+    
+    setOrigenSuggestions(ubicacionesFiltradas)
+  }, [todasUbicaciones, filtroTipo, origenSearch])
+
+  // Actualizar sugerencias de destino cuando cambia el filtro o la búsqueda
+  useEffect(() => {
+    let ubicacionesFiltradas = todasUbicaciones
+    
+    // Aplicar filtro de tipo
+    if (filtroTipo === 'municipios') {
+      ubicacionesFiltradas = ubicacionesFiltradas.filter(
+        u => u.tipo?.toLowerCase() === 'municipio' || u.tipo?.toLowerCase() === 'municipio turistico'
+      )
+    } else if (filtroTipo === 'cayo') {
+      ubicacionesFiltradas = ubicacionesFiltradas.filter(
+        u => u.tipo?.toLowerCase() === 'cayo'
+      )
+    } else if (filtroTipo === 'aeropuerto') {
+      ubicacionesFiltradas = ubicacionesFiltradas.filter(
+        u => u.tipo?.toLowerCase() === 'aeropuerto'
+      )
+    }
+    
+    // Aplicar búsqueda
+    if (destinoSearch.trim()) {
+      const searchLower = destinoSearch.toLowerCase()
+      ubicacionesFiltradas = ubicacionesFiltradas.filter(u =>
+        u.nombre.toLowerCase().includes(searchLower) ||
+        u.provincia?.toLowerCase().includes(searchLower)
+      )
+    }
+    
+    setDestinoSuggestions(ubicacionesFiltradas)
+  }, [todasUbicaciones, filtroTipo, destinoSearch])
 
   // Detectar si origen o destino son de Oriente usando el campo region
   useEffect(() => {
@@ -171,6 +236,45 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
             </div>
           )}
 
+          {/* Filtros de Tipo de Ubicación */}
+          <div className="mb-3">
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setFiltroTipo('municipios')}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  filtroTipo === 'municipios'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                Toda Cuba
+              </button>
+              <button
+                type="button"
+                onClick={() => setFiltroTipo('cayo')}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  filtroTipo === 'cayo'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                 Cayos
+              </button>
+              <button
+                type="button"
+                onClick={() => setFiltroTipo('aeropuerto')}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  filtroTipo === 'aeropuerto'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                Aeropuertos
+              </button>
+            </div>
+          </div>
+
           {/* Origen */}
           <div className="mb-3 relative">
             <input
@@ -179,7 +283,10 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
               onChange={(e) => {
                 setOrigenSearch(e.target.value)
                 setSelectedOrigen(null)
+                setShowOrigenDropdown(true)
               }}
+              onFocus={() => setShowOrigenDropdown(true)}
+              onBlur={() => setTimeout(() => setShowOrigenDropdown(false), 200)}
               placeholder={`📍 ${t('origin')}`}
               className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
@@ -190,7 +297,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                 onClick={() => {
                   setSelectedOrigen(null)
                   setOrigenSearch('')
-                  setOrigenSuggestions([])
+                  setShowOrigenDropdown(false)
                 }}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
               >
@@ -199,7 +306,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                 </svg>
               </button>
             )}
-            {origenSuggestions.length > 0 && !selectedOrigen && (
+            {showOrigenDropdown && origenSuggestions.length > 0 && !selectedOrigen && (
               <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
                 {origenSuggestions.map((ubicacion) => (
                   <button
@@ -208,7 +315,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                     onClick={() => {
                       setSelectedOrigen(ubicacion)
                       setOrigenSearch('')
-                      setOrigenSuggestions([])
+                      setShowOrigenDropdown(false)
                     }}
                     className="w-full text-left px-4 py-2 hover:bg-blue-50 transition-colors"
                   >
@@ -228,7 +335,10 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
               onChange={(e) => {
                 setDestinoSearch(e.target.value)
                 setSelectedDestino(null)
+                setShowDestinoDropdown(true)
               }}
+              onFocus={() => setShowDestinoDropdown(true)}
+              onBlur={() => setTimeout(() => setShowDestinoDropdown(false), 200)}
               placeholder={`🎯 ${t('destination')}`}
               className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
@@ -239,7 +349,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                 onClick={() => {
                   setSelectedDestino(null)
                   setDestinoSearch('')
-                  setDestinoSuggestions([])
+                  setShowDestinoDropdown(false)
                 }}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
               >
@@ -248,7 +358,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                 </svg>
               </button>
             )}
-            {destinoSuggestions.length > 0 && !selectedDestino && (
+            {showDestinoDropdown && destinoSuggestions.length > 0 && !selectedDestino && (
               <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
                 {destinoSuggestions.map((ubicacion) => (
                   <button
@@ -257,7 +367,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                     onClick={() => {
                       setSelectedDestino(ubicacion)
                       setDestinoSearch('')
-                      setDestinoSuggestions([])
+                      setShowDestinoDropdown(false)
                     }}
                     className="w-full text-left px-4 py-2 hover:bg-blue-50 transition-colors"
                   >

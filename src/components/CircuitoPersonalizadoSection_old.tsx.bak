@@ -1,0 +1,907 @@
+'use client'
+
+import { useState, useEffect, FormEvent } from 'react'
+import { useTranslations } from 'next-intl'
+import { getUbicaciones, calculatePrice } from '@/lib/services'
+import { abrirWhatsApp } from '@/lib/whatsapp'
+import type { Ubicacion } from '@/types'
+
+interface CiudadCircuito {
+  ciudadId: number
+  alojamiento?: {
+    habitaciones: number
+    noches: number
+  }
+}
+
+export default function CircuitoPersonalizadoSection() {
+  const t = useTranslations('customCircuit')
+  const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([])
+  const [cantidadPersonas, setCantidadPersonas] = useState(1)
+  const [ciudadesSeleccionadas, setCiudadesSeleccionadas] = useState<CiudadCircuito[]>([])
+  const [loading, setLoading] = useState(true)
+  const [calculando, setCalculando] = useState(false)
+  const [precioTransporte, setPrecioTransporte] = useState(0)
+  const [distanciaTotal, setDistanciaTotal] = useState(0)
+  const [showBookingModal, setShowBookingModal] = useState(false)
+
+  useEffect(() => {
+    cargarUbicaciones()
+  }, [])
+
+  useEffect(() => {
+    calcularRuta()
+  }, [ciudadesSeleccionadas, cantidadPersonas])
+
+  const cargarUbicaciones = async () => {
+    try {
+      setLoading(true)
+      const data = await getUbicaciones()
+      setUbicaciones(data)
+    } catch (error) {
+      console.error('Error cargando ubicaciones:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const calcularRuta = async () => {
+    if (ciudadesSeleccionadas.length < 2) {
+      setPrecioTransporte(0)
+      setDistanciaTotal(0)
+      return
+    }
+
+    try {
+      setCalculando(true)
+      let precioTotal = 0
+      let distanciaTotal = 0
+
+      for (let i = 0; i < ciudadesSeleccionadas.length - 1; i++) {
+        const origen = ciudadesSeleccionadas[i].ciudadId
+        const destino = ciudadesSeleccionadas[i + 1].ciudadId
+
+        const resultado = await calculatePrice(origen, destino, 'privado', cantidadPersonas)
+        precioTotal += resultado.price
+        distanciaTotal += resultado.distance_km
+      }
+
+      setPrecioTransporte(Math.round(precioTotal))
+      setDistanciaTotal(Math.round(distanciaTotal * 10) / 10)
+    } catch (error) {
+      console.error('Error calculando ruta:', error)
+      setPrecioTransporte(0)
+      setDistanciaTotal(0)
+    } finally {
+      setCalculando(false)
+    }
+  }
+
+  const agregarCiudad = (ciudadId: number) => {
+    setCiudadesSeleccionadas(prev => [...prev, { ciudadId }])
+  }
+
+  const eliminarCiudad = (index: number) => {
+    setCiudadesSeleccionadas(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const moverCiudad = (index: number, direccion: 'arriba' | 'abajo') => {
+    const nuevasCiudades = [...ciudadesSeleccionadas]
+    if (direccion === 'arriba' && index > 0) {
+      [nuevasCiudades[index], nuevasCiudades[index - 1]] = [nuevasCiudades[index - 1], nuevasCiudades[index]]
+    } else if (direccion === 'abajo' && index < ciudadesSeleccionadas.length - 1) {
+      [nuevasCiudades[index], nuevasCiudades[index + 1]] = [nuevasCiudades[index + 1], nuevasCiudades[index]]
+    }
+    setCiudadesSeleccionadas(nuevasCiudades)
+  }
+
+  const toggleAlojamiento = (index: number) => {
+    setCiudadesSeleccionadas(prev => prev.map((ciudad, i) => {
+      if (i === index) {
+        if (ciudad.alojamiento) {
+          const { alojamiento, ...rest } = ciudad
+          return rest
+        } else {
+          return { ...ciudad, alojamiento: { habitaciones: 1, noches: 1 } }
+        }
+      }
+      return ciudad
+    }))
+  }
+
+  const actualizarAlojamiento = (index: number, campo: 'habitaciones' | 'noches', valor: number) => {
+    setCiudadesSeleccionadas(prev => prev.map((ciudad, i) => {
+      if (i === index && ciudad.alojamiento) {
+        return {
+          ...ciudad,
+          alojamiento: { ...ciudad.alojamiento, [campo]: valor }
+        }
+      }
+      return ciudad
+    }))
+  }
+
+  const puedeAgregarAlojamiento = (ciudadId: number): boolean => {
+    const ubicacion = ubicaciones.find(u => u.id === ciudadId)
+    const tipo = ubicacion?.tipo?.toLowerCase()
+    return tipo === 'municipio' || tipo === 'municipio turistico'
+  }
+
+  const calcularPrecioAlojamiento = (): number => {
+    return ciudadesSeleccionadas.reduce((total, ciudad) => {
+      if (ciudad.alojamiento) {
+        return total + (ciudad.alojamiento.habitaciones * ciudad.alojamiento.noches * 30)
+      }
+      return total
+    }, 0)
+  }
+
+  const calcularDiasTotales = (): number => {
+    const nochesTotales = ciudadesSeleccionadas.reduce((total, ciudad) => {
+      return total + (ciudad.alojamiento?.noches || 0)
+    }, 0)
+    return nochesTotales + 1 // Los días son las noches + 1
+  }
+
+  const calcularPrecioTotal = (): number => {
+    const diasCircuito = calcularDiasTotales()
+    return (precioTransporte * diasCircuito) + calcularPrecioAlojamiento()
+  }
+
+
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    
+    const ruta = ciudadesSeleccionadas.map((ciudad, index) => {
+      const ubicacion = ubicaciones.find(u => u.id === ciudad.ciudadId)
+      let texto = `${index + 1}. ${ubicacion?.nombre}`
+      
+      if (ciudad.alojamiento) {
+        texto += ` (🏨 ${ciudad.alojamiento.noches} ${ciudad.alojamiento.noches === 1 ? 'noche' : 'noches'}, ${ciudad.alojamiento.habitaciones} hab)`
+      }
+      
+      return texto
+    }).join('\n')
+
+    const totalNoches = ciudadesSeleccionadas.reduce((total, c) => total + (c.alojamiento?.noches || 0), 0)
+    const diasCircuito = calcularDiasTotales()
+
+    abrirWhatsApp({
+      tipo: 'circuito_personalizado',
+      datos: {
+        nombre: formData.get('nombre'),
+        email: formData.get('email'),
+        telefono: formData.get('telefono'),
+        ruta,
+        personas: cantidadPersonas,
+        dias: diasCircuito,
+        distancia: distanciaTotal,
+        precioTransporte: precioTransporte * diasCircuito,
+        alojamiento: totalNoches > 0 ? 'Sí' : 'No',
+        detalleAlojamiento: totalNoches > 0 ? `${totalNoches} ${totalNoches === 1 ? 'noche' : 'noches'}` : 'No requiere',
+        precioAlojamiento: calcularPrecioAlojamiento(),
+        precioTotal: calcularPrecioTotal(),
+        comentarios: formData.get('comentarios') || 'Sin comentarios'
+      }
+    })
+    
+    setShowBookingModal(false)
+  }
+
+  if (loading) {
+    return (
+      <section id="circuito" className="py-16 px-4 bg-gray-50">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <section id="circuito" className="py-16 md:py-20 px-4 bg-gradient-to-br from-blue-50 to-indigo-50">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-800 mb-3">
+            🗺️ Circuito Personalizado
+          </h2>
+          <p className="text-slate-600 max-w-2xl mx-auto">
+            Selecciona las ciudades que visitarás en orden. Taxi disponible 24 horas.
+          </p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8">
+          {/* Cantidad de personas */}
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              👥 Personas
+            </label>
+            <input
+              type="number"
+              min="1"
+              max="8"
+              value={cantidadPersonas || ''}
+              onChange={(e) => setCantidadPersonas(parseInt(e.target.value) || 1)}
+              className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          {/* Selector de ciudades */}
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              📍 Agregar ciudad a tu ruta
+            </label>
+            <select
+              onChange={(e) => {
+                const ciudadId = parseInt(e.target.value)
+                if (ciudadId) {
+                  agregarCiudad(ciudadId)
+                  e.target.value = ''
+                }
+              }}
+              className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Selecciona una ciudad...</option>
+              {ubicaciones.map(ub => (
+                <option key={ub.id} value={ub.id}>
+                  {ub.nombre} - {ub.provincia}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Ciudades seleccionadas */}
+          {ciudadesSeleccionadas.length > 0 && (
+            <div className="mb-6">
+              <p className="text-sm font-semibold text-slate-700 mb-3">Tu ruta:</p>
+              <div className="space-y-2">
+                {ciudadesSeleccionadas.map((ciudad, index) => {
+                  const ubicacion = ubicaciones.find(u => u.id === ciudad.ciudadId)
+                  const puedeAlojarse = puedeAgregarAlojamiento(ciudad.ciudadId)
+                  
+                  return (
+                    <div key={index} className="bg-slate-50 rounded-xl p-4 border-2 border-slate-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-blue-600">{index + 1}.</span>
+                          <span className="font-medium text-slate-800">{ubicacion?.nombre}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {index > 0 && (
+                            <button
+                              onClick={() => moverCiudad(index, 'arriba')}
+                              className="px-2 py-1 text-blue-600 hover:bg-blue-50 rounded"
+                              title="Mover arriba"
+                            >
+                              ↑
+                            </button>
+                          )}
+                          {index < ciudadesSeleccionadas.length - 1 && (
+                            <button
+                              onClick={() => moverCiudad(index, 'abajo')}
+                              className="px-2 py-1 text-blue-600 hover:bg-blue-50 rounded"
+                              title="Mover abajo"
+                            >
+                              ↓
+                            </button>
+                          )}
+                          <button
+                            onClick={() => eliminarCiudad(index)}
+                            className="px-2 py-1 text-red-600 hover:bg-red-50 rounded"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Alojamiento */}
+                      {puedeAlojarse && (
+                        <div className="mt-3 pt-3 border-t border-slate-200">
+                          {!ciudad.alojamiento ? (
+                            <button
+                              onClick={() => toggleAlojamiento(index)}
+                              className="w-full px-3 py-2 bg-indigo-50 text-indigo-700 text-sm rounded-lg hover:bg-indigo-100 transition-colors"
+                            >
+                              + Agregar alojamiento
+                            </button>
+                          ) : (
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-indigo-700">🏨 Alojamiento</span>
+                                <button
+                                  onClick={() => toggleAlojamiento(index)}
+                                  className="text-xs text-red-600 hover:text-red-800"
+                                >
+                                  Quitar
+                                </button>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <label className="block text-xs text-slate-600 mb-1">Habitaciones</label>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    max="10"
+                                    value={ciudad.alojamiento.habitaciones}
+                                    onChange={(e) => actualizarAlojamiento(index, 'habitaciones', parseInt(e.target.value) || 1)}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-slate-600 mb-1">Noches</label>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    max="30"
+                                    value={ciudad.alojamiento.noches}
+                                    onChange={(e) => actualizarAlojamiento(index, 'noches', parseInt(e.target.value) || 1)}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                                  />
+                                </div>
+                              </div>
+                              <p className="text-xs text-indigo-700 text-right">
+                                ${ciudad.alojamiento.habitaciones * ciudad.alojamiento.noches * 30}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Resumen */}
+          {ciudadesSeleccionadas.length >= 2 && (
+            <div className="space-y-4">
+              <div className="p-4 bg-slate-50 rounded-xl">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-slate-600">Distancia:</span>
+                  <span className="font-semibold">{calculando ? '...' : `${distanciaTotal} km`}</span>
+                </div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-slate-600">Días:</span>
+                  <span className="font-semibold">{calcularDiasTotales()}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Personas:</span>
+                  <span className="font-semibold">{cantidadPersonas}</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between p-3 bg-blue-50 rounded-lg">
+                  <span className="text-sm text-blue-800">🚕 Transporte</span>
+                  <span className="font-bold text-blue-900">
+                    ${calculando ? '...' : precioTransporte * calcularDiasTotales()}
+                  </span>
+                </div>
+
+                {calcularPrecioAlojamiento() > 0 && (
+                  <div className="flex justify-between p-3 bg-indigo-50 rounded-lg">
+                    <span className="text-sm text-indigo-800">🏨 Alojamiento</span>
+                    <span className="font-bold text-indigo-900">${calcularPrecioAlojamiento()}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl">
+                  <span className="font-semibold">💰 Total</span>
+                  <span className="text-xl font-bold">
+                    ${calculando ? '...' : calcularPrecioTotal()}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowBookingModal(true)}
+                disabled={calculando}
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-bold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {calculando ? 'Calculando...' : 'Solicitar circuito'}
+              </button>
+
+              <p className="text-xs text-center text-slate-500">
+                ℹ️ Taxi disponible 24 horas durante todo el circuito
+              </p>
+            </div>
+          )}
+
+          {ciudadesSeleccionadas.length < 2 && (
+            <div className="text-center py-12 text-slate-500">
+              <p className="text-4xl mb-2">📍</p>
+              <p>Selecciona al menos 2 ciudades para comenzar</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Modal de reserva */}
+      {showBookingModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowBookingModal(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-2xl">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="text-2xl font-bold mb-1">Circuito Personalizado</h3>
+                  <p className="text-blue-100 text-sm">Completa tus datos</p>
+                </div>
+                <button
+                  onClick={() => setShowBookingModal(false)}
+                  className="text-white hover:bg-white/20 rounded-lg p-2 transition-all"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Nombre</label>
+                <input
+                  type="text"
+                  name="nombre"
+                  placeholder="Tu nombre"
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="tu@email.com"
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Teléfono</label>
+                <input
+                  type="tel"
+                  name="telefono"
+                  placeholder="+53 5123 4567"
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Comentarios</label>
+                <textarea
+                  name="comentarios"
+                  rows={3}
+                  placeholder="Preferencias especiales..."
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                />
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <p className="text-sm text-blue-800 font-medium mb-2">
+                  💰 Total: <span className="text-lg font-bold">${calcularPrecioTotal()}</span>
+                </p>
+                <p className="text-xs text-blue-700">
+                  {calcularDiasTotales()} días • {ciudadesSeleccionadas.reduce((t, c) => t + (c.alojamiento?.noches || 0), 0)} noches
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-bold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+              >
+                <span>📱</span>
+                Enviar por WhatsApp
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </section>
+  )
+}
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  🏛️ Turísticos
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFiltroTipo('cayo')}
+                  className={`px-3 py-2 text-sm rounded-lg font-medium transition-all ${
+                    filtroTipo === 'cayo'
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  🏝️ Cayos
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFiltroTipo('aeropuerto')}
+                  className={`px-3 py-2 text-sm rounded-lg font-medium transition-all ${
+                    filtroTipo === 'aeropuerto'
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  ✈️ Aeropuertos
+                </button>
+              </div>
+            </div>
+
+            {/* Lugares a visitar en el día actual */}
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                📍 Lugares para el Día {diaActual}
+              </label>
+              {ubicacionesFiltradas.length === 0 ? (
+                <div className="text-center py-8 text-slate-500 border-2 border-slate-200 rounded-xl">
+                  <p>No hay ubicaciones de este tipo</p>
+                </div>
+              ) : (
+                <div className="max-h-64 overflow-y-auto border-2 border-slate-200 rounded-xl p-3 space-y-2">
+                  {ubicacionesFiltradas.map((ubicacion) => {
+                    const diaData = planDias.find(d => d.dia === diaActual)
+                    const seleccionada = diaData?.ciudades.includes(ubicacion.id)
+                    return (
+                      <button
+                        key={ubicacion.id}
+                        type="button"
+                        onClick={() => toggleCiudadEnDia(ubicacion.id, diaActual)}
+                        className={`w-full text-left px-4 py-2 rounded-lg transition-all ${
+                          seleccionada
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span>{ubicacion.nombre} - {ubicacion.provincia}</span>
+                          <span className="text-xs opacity-75">
+                            {ubicacion.tipo}
+                          </span>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Alojamiento para el día actual */}
+            {puedeAgregarAlojamiento(diaActual) && (
+              <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-xl">
+                <p className="text-sm font-semibold text-indigo-800 mb-3">
+                  🏨 Alojamiento para el Día {diaActual}
+                </p>
+                {(() => {
+                  const diaData = planDias.find(d => d.dia === diaActual)
+                  if (!diaData?.alojamiento) {
+                    const ciudadesDisponibles = getCiudadesConAlojamiento(diaActual)
+                    return (
+                      <div className="space-y-2">
+                        <p className="text-xs text-indigo-700 mb-2">
+                          Selecciona dónde te alojarás esta noche:
+                        </p>
+                        {ciudadesDisponibles.map(ciudad => (
+                          <button
+                            key={ciudad.id}
+                            type="button"
+                            onClick={() => agregarAlojamientoDia(diaActual, ciudad.id)}
+                            className="w-full px-3 py-2 text-sm bg-white text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors text-left"
+                          >
+                            {ciudad.nombre}
+                          </button>
+                        ))}
+                      </div>
+                    )
+                  } else {
+                    const ubicacion = ubicaciones.find(u => u.id === diaData.alojamiento?.ciudadId)
+                    return (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-indigo-700">📍 {ubicacion?.nombre}</span>
+                          <button
+                            type="button"
+                            onClick={() => removerAlojamientoDia(diaActual)}
+                            className="text-xs text-red-600 hover:text-red-800"
+                          >
+                            Quitar
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <span className="block text-xs text-indigo-700 mb-1">Habitaciones:</span>
+                            <input
+                              type="number"
+                              min="1"
+                              max="10"
+                              value={diaData.alojamiento.habitaciones}
+                              onChange={(e) => actualizarHabitaciones(diaActual, parseInt(e.target.value) || 1)}
+                              className="w-full px-3 py-2 text-sm border border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            />
+                          </div>
+                          <div>
+                            <span className="block text-xs text-indigo-700 mb-1">Noches:</span>
+                            <input
+                              type="number"
+                              min="1"
+                              max="30"
+                              value={diaData.alojamiento.noches}
+                              onChange={(e) => actualizarNoches(diaActual, parseInt(e.target.value) || 1)}
+                              className="w-full px-3 py-2 text-sm border border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            />
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-sm font-semibold text-indigo-700">
+                            ${diaData.alojamiento.habitaciones * diaData.alojamiento.noches * 30}
+                          </span>
+                          <p className="text-xs text-indigo-600">
+                            {diaData.alojamiento.habitaciones} hab × {diaData.alojamiento.noches} noches × $30
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  }
+                })()}
+              </div>
+            )}
+          </div>
+
+          {/* Panel de resumen */}
+          <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8">
+            <h3 className="text-xl font-bold text-slate-800 mb-6">Resumen del circuito</h3>
+
+            {(() => {
+              const totalCiudades = planDias.reduce((acc, dia) => acc + dia.ciudades.length, 0)
+              return totalCiudades === 0 ? (
+                <div className="text-center py-12 text-slate-500">
+                  <p className="text-lg mb-2">📍</p>
+                  <p>Agrega lugares a tu itinerario para comenzar</p>
+                </div>
+              ) : null
+            })()}
+
+            {(() => {
+              const totalCiudades = planDias.reduce((acc, dia) => acc + dia.ciudades.length, 0)
+              return totalCiudades > 0 ? (
+              <div className="space-y-6">
+                {/* Itinerario día por día */}
+                <div className="p-4 bg-slate-50 rounded-xl space-y-3">
+                  <p className="text-sm font-semibold text-slate-700 mb-3">📋 Itinerario</p>
+                  {planDias.map(dia => {
+                    if (dia.ciudades.length === 0) return null
+                    return (
+                      <div key={dia.dia} className="bg-white rounded-lg p-3 border border-slate-200">
+                        <p className="text-xs font-semibold text-blue-600 mb-1">Día {dia.dia}</p>
+                        <div className="space-y-1">
+                          {dia.ciudades.map(ciudadId => {
+                            const ubicacion = ubicaciones.find(u => u.id === ciudadId)
+                            return (
+                              <p key={ciudadId} className="text-xs text-slate-700">
+                                • {ubicacion?.nombre}
+                              </p>
+                            )
+                          })}
+                          {dia.alojamiento && (
+                            <p className="text-xs text-indigo-600 mt-1">
+                              🏨 {dia.alojamiento.noches} {dia.alojamiento.noches === 1 ? 'noche' : 'noches'} en {ubicaciones.find(u => u.id === dia.alojamiento?.ciudadId)?.nombre} ({dia.alojamiento.habitaciones} hab)
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Información de la ruta */}
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-slate-600">🚕 Recogida:</span>
+                    <span className="font-semibold text-slate-800">
+                      {puntoRecogida ? ubicaciones.find(u => u.id === puntoRecogida)?.nombre : 'No seleccionado'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-slate-600">🏁 Destino final:</span>
+                    <span className="font-semibold text-slate-800">
+                      {destinoFinal ? ubicaciones.find(u => u.id === destinoFinal)?.nombre : 'No seleccionado'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-slate-600">Duración:</span>
+                    <span className="font-semibold text-slate-800">{planDias.length} días</span>
+                  </div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-slate-600">Distancia total:</span>
+                    <span className="font-semibold text-slate-800">
+                      {calculando ? '...' : `${distanciaTotal} km`}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-600">Personas:</span>
+                    <span className="font-semibold text-slate-800">{cantidadPersonas}</span>
+                  </div>
+                </div>
+
+                {/* Desglose de precios */}
+                <div className="space-y-3">
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm text-blue-800">🚕 Transporte (24hrs)</span>
+                      <span className="font-bold text-blue-900">
+                        {calculando ? '...' : `$${precioTransporte * planDias.length}`}
+                      </span>
+                    </div>
+                    <p className="text-xs text-blue-700">
+                      ${precioTransporte} × {planDias.length} días
+                    </p>
+                  </div>
+
+                  {(() => {
+                    const diasConAlojamiento = planDias.filter(d => d.alojamiento).length
+                    return diasConAlojamiento > 0 ? (
+                      <div className="p-3 bg-indigo-50 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-sm font-semibold text-indigo-800">🏨 Alojamiento</p>
+                          <span className="font-bold text-indigo-900">${calcularPrecioAlojamiento()}</span>
+                        </div>
+                        <div className="space-y-1">
+                          {planDias.map((dia) => {
+                            if (!dia.alojamiento) return null
+                            const ubicacion = ubicaciones.find(u => u.id === dia.alojamiento?.ciudadId)
+                            return (
+                              <div key={dia.dia} className="flex items-center justify-between text-xs text-indigo-700">
+                                <span>Día {dia.dia} - {ubicacion?.nombre}</span>
+                                <span>{dia.alojamiento.habitaciones} hab × {dia.alojamiento.noches} noches × $30 = ${dia.alojamiento.habitaciones * dia.alojamiento.noches * 30}</span>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    ) : null
+                  })()}
+
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl">
+                    <span className="text-lg font-semibold">💰 Total</span>
+                    <span className="text-2xl font-bold">
+                      {calculando ? '...' : `$${calcularPrecioTotal()}`}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Botón de reserva */}
+                <button
+                  onClick={() => {
+                    const validacion = validarCircuito()
+                    if (validacion.valido) {
+                      setErrorValidacion('')
+                      setShowBookingModal(true)
+                    } else {
+                      setErrorValidacion(validacion.error)
+                    }
+                  }}
+                  disabled={calculando}
+                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-bold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {calculando ? 'Calculando...' : 'Solicitar circuito'}
+                </button>
+
+                {errorValidacion && (
+                  <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-800">⚠️ {errorValidacion}</p>
+                  </div>
+                )}
+
+                <p className="text-xs text-center text-slate-500 mt-4">
+                  ℹ️ Incluye taxi disponible las 24 horas durante todo el circuito
+                </p>
+              </div>
+            ) : null
+          })()}
+          </div>
+        </div>
+      </div>
+
+      {/* Modal de reserva */}
+      {showBookingModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowBookingModal(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-2xl">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="text-2xl font-bold mb-1">Circuito Personalizado</h3>
+                  <p className="text-blue-100 text-sm">Completa tus datos para continuar</p>
+                </div>
+                <button
+                  onClick={() => setShowBookingModal(false)}
+                  className="text-white hover:bg-white/20 rounded-lg p-2 transition-all"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Nombre completo</label>
+                <input
+                  type="text"
+                  name="nombre"
+                  placeholder="Tu nombre"
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="tu@email.com"
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Teléfono</label>
+                <input
+                  type="tel"
+                  name="telefono"
+                  placeholder="+53 5123 4567"
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Comentarios adicionales</label>
+                <textarea
+                  name="comentarios"
+                  rows={3}
+                  placeholder="Alguna preferencia especial..."
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                />
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <p className="text-sm text-blue-800 font-medium mb-2">
+                  💰 Precio Total: <span className="text-lg font-bold">${calcularPrecioTotal()}</span>
+                </p>
+                <p className="text-xs text-blue-700 mb-1">
+                  🚕 Transporte: ${precioTransporte * planDias.length} ({planDias.length} días)
+                </p>
+                <p className="text-xs text-blue-700">
+                  🏨 Alojamiento: ${calcularPrecioAlojamiento()}
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-bold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+                Enviar por WhatsApp
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </section>
+  )
+}
