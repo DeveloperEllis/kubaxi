@@ -280,7 +280,7 @@ export default function CircuitoPersonalizadoSection() {
               className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent peer text-sm"
             />
             <label className="absolute left-4 top-2.5 text-slate-500 text-sm transition-all duration-200 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:text-blue-600 peer-focus:bg-white peer-focus:px-1 peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-1 pointer-events-none">
-              👥 Personas
+              👥 {t('passengers')}
             </label>
           </div>
           <div className="relative">
@@ -289,10 +289,10 @@ export default function CircuitoPersonalizadoSection() {
               onChange={(e) => setTipoVehiculo(e.target.value as 'clasico' | 'moderno' | 'van' | '')}
               className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm appearance-none bg-white cursor-pointer"
             >
-              <option value="" disabled>🚗 Tipo de vehículo</option>
-              <option value="clasico">🚗 Clásico</option>
-              <option value="moderno">🚙 Moderno</option>
-              <option value="van">🚐 Van</option>
+              <option value="" disabled>🚗 {t('vehicleType')}</option>
+              <option value="clasico">🚗 {t('classic')}</option>
+              <option value="moderno">🚙 {t('modern')}</option>
+              <option value="van">🚐 {t('van')}</option>
             </select>
           </div>
         </div>
@@ -306,7 +306,7 @@ export default function CircuitoPersonalizadoSection() {
               onChange={(e) => setMostrarFiltros(e.target.checked)}
               className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-500"
             />
-            <span>Mostrar filtros</span>
+            <span>{t('showFilters')}</span>
           </label>
         </div>
 
@@ -314,7 +314,7 @@ export default function CircuitoPersonalizadoSection() {
         {mostrarFiltros && !origenId && (
           <div className="mb-4">
             <label className="block text-xs font-semibold text-slate-700 mb-2">
-               Filtrar origen
+              🏁 {t('filterOrigin')}
             </label>
             <div className="flex gap-2 flex-wrap">
               <button
@@ -326,7 +326,7 @@ export default function CircuitoPersonalizadoSection() {
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
-                Todo
+                {t('all')}
               </button>
               <button
                 type="button"
@@ -337,7 +337,7 @@ export default function CircuitoPersonalizadoSection() {
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
-                Turístico
+                {t('tourist')}
               </button>
               <button
                 type="button"
@@ -348,7 +348,7 @@ export default function CircuitoPersonalizadoSection() {
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
-                Cayo
+                {t('cay')}
               </button>
               <button
                 type="button"
@@ -359,7 +359,7 @@ export default function CircuitoPersonalizadoSection() {
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
-                Aeropuerto
+                {t('airport')}
               </button>
             </div>
           </div>
