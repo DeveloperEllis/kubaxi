@@ -24,6 +24,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
   const [showDestinoDropdown, setShowDestinoDropdown] = useState(false)
   const [selectedOrigen, setSelectedOrigen] = useState<Ubicacion | null>(null)
   const [selectedDestino, setSelectedDestino] = useState<Ubicacion | null>(null)
+  const [mostrarFiltros, setMostrarFiltros] = useState(false)
   const [filtroOrigenTipo, setFiltroOrigenTipo] = useState<string>('todos')
   const [filtroDestinoTipo, setFiltroDestinoTipo] = useState<string>('todos')
   
@@ -61,21 +62,23 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
   useEffect(() => {
     let ubicacionesFiltradas = todasUbicaciones
     
-    // Aplicar filtro de tipo
-    if (filtroOrigenTipo === 'municipio turistico') {
-      ubicacionesFiltradas = ubicacionesFiltradas.filter(
-        u => u.tipo?.toLowerCase() === 'municipio turistico'
-      )
-    } else if (filtroOrigenTipo === 'cayo') {
-      ubicacionesFiltradas = ubicacionesFiltradas.filter(
-        u => u.tipo?.toLowerCase() === 'cayo'
-      )
-    } else if (filtroOrigenTipo === 'aeropuerto') {
-      ubicacionesFiltradas = ubicacionesFiltradas.filter(
-        u => u.tipo?.toLowerCase() === 'aeropuerto'
-      )
+    // Aplicar filtro de tipo solo si mostrarFiltros está activo
+    if (mostrarFiltros) {
+      if (filtroOrigenTipo === 'municipio turistico') {
+        ubicacionesFiltradas = ubicacionesFiltradas.filter(
+          u => u.tipo?.toLowerCase() === 'municipio turistico'
+        )
+      } else if (filtroOrigenTipo === 'cayo') {
+        ubicacionesFiltradas = ubicacionesFiltradas.filter(
+          u => u.tipo?.toLowerCase() === 'cayo'
+        )
+      } else if (filtroOrigenTipo === 'aeropuerto') {
+        ubicacionesFiltradas = ubicacionesFiltradas.filter(
+          u => u.tipo?.toLowerCase() === 'aeropuerto'
+        )
+      }
+      // Si es 'todos', no se filtra
     }
-    // Si es 'todos', no se filtra
     
     // Aplicar búsqueda
     if (origenSearch.trim()) {
@@ -87,27 +90,29 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
     }
     
     setOrigenSuggestions(ubicacionesFiltradas)
-  }, [todasUbicaciones, filtroOrigenTipo, origenSearch])
+  }, [todasUbicaciones, filtroOrigenTipo, origenSearch, mostrarFiltros])
 
   // Actualizar sugerencias de destino cuando cambia el filtro o la búsqueda
   useEffect(() => {
     let ubicacionesFiltradas = todasUbicaciones
     
-    // Aplicar filtro de tipo
-    if (filtroDestinoTipo === 'municipio turistico') {
-      ubicacionesFiltradas = ubicacionesFiltradas.filter(
-        u => u.tipo?.toLowerCase() === 'municipio turistico'
-      )
-    } else if (filtroDestinoTipo === 'cayo') {
-      ubicacionesFiltradas = ubicacionesFiltradas.filter(
-        u => u.tipo?.toLowerCase() === 'cayo'
-      )
-    } else if (filtroDestinoTipo === 'aeropuerto') {
-      ubicacionesFiltradas = ubicacionesFiltradas.filter(
-        u => u.tipo?.toLowerCase() === 'aeropuerto'
-      )
+    // Aplicar filtro de tipo solo si mostrarFiltros está activo
+    if (mostrarFiltros) {
+      if (filtroDestinoTipo === 'municipio turistico') {
+        ubicacionesFiltradas = ubicacionesFiltradas.filter(
+          u => u.tipo?.toLowerCase() === 'municipio turistico'
+        )
+      } else if (filtroDestinoTipo === 'cayo') {
+        ubicacionesFiltradas = ubicacionesFiltradas.filter(
+          u => u.tipo?.toLowerCase() === 'cayo'
+        )
+      } else if (filtroDestinoTipo === 'aeropuerto') {
+        ubicacionesFiltradas = ubicacionesFiltradas.filter(
+          u => u.tipo?.toLowerCase() === 'aeropuerto'
+        )
+      }
+      // Si es 'todos', no se filtra
     }
-    // Si es 'todos', no se filtra
     
     // Aplicar búsqueda
     if (destinoSearch.trim()) {
@@ -119,7 +124,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
     }
     
     setDestinoSuggestions(ubicacionesFiltradas)
-  }, [todasUbicaciones, filtroDestinoTipo, destinoSearch])
+  }, [todasUbicaciones, filtroDestinoTipo, destinoSearch, mostrarFiltros])
 
   // Detectar si origen o destino son de Oriente usando el campo region
   useEffect(() => {
@@ -239,9 +244,23 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
             </div>
           )}
 
+          {/* Checkbox para mostrar filtros */}
+          <div className="mb-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={mostrarFiltros}
+                onChange={(e) => setMostrarFiltros(e.target.checked)}
+                className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="text-sm text-slate-700 font-medium">Mostrar filtros de ubicación</span>
+            </label>
+          </div>
+
           {/* Origen con filtros compactos */}
           <div className="mb-3">
-            <div className="flex gap-1 mb-1.5">
+            {mostrarFiltros && (
+              <div className="flex gap-1 mb-1.5">
               <button
                 type="button"
                 onClick={() => setFiltroOrigenTipo('todos')}
@@ -287,6 +306,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                 Aeropuertos
               </button>
             </div>
+            )}
             <div className="relative">
             <input
               type="text"
@@ -341,7 +361,8 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
 
           {/* Destino con filtros compactos */}
           <div className="mb-3">
-            <div className="flex gap-1 mb-1.5">
+            {mostrarFiltros && (
+              <div className="flex gap-1 mb-1.5">
               <button
                 type="button"
                 onClick={() => setFiltroDestinoTipo('todos')}
@@ -387,6 +408,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                 Aeropuertos
               </button>
             </div>
+            )}
             <div className="relative">
             <input
               type="text"
