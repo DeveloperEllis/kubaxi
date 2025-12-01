@@ -238,6 +238,9 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
 
           {/* Filtros de Tipo de Ubicación */}
           <div className="mb-3">
+            <label className="block text-xs font-medium text-slate-600 mb-2">
+              Filtrar ubicaciones:
+            </label>
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"

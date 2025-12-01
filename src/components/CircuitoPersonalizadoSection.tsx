@@ -26,6 +26,9 @@ export default function CircuitoPersonalizadoSection() {
   const [precioTransporte, setPrecioTransporte] = useState(0)
   const [distanciaTotal, setDistanciaTotal] = useState(0)
   const [showBookingModal, setShowBookingModal] = useState(false)
+  const [busquedaCiudad, setBusquedaCiudad] = useState('')
+  const [showCiudadDropdown, setShowCiudadDropdown] = useState(false)
+  const [ciudadesFiltradas, setCiudadesFiltradas] = useState<Ubicacion[]>([])
 
   useEffect(() => {
     cargarUbicaciones()
@@ -38,6 +41,21 @@ export default function CircuitoPersonalizadoSection() {
   useEffect(() => {
     calcularRuta()
   }, [ciudadesSeleccionadas, cantidadPersonas])
+
+  // Actualizar ciudades filtradas cuando cambia el filtro o la búsqueda
+  useEffect(() => {
+    let resultado = ubicacionesFiltradas
+    
+    if (busquedaCiudad.trim()) {
+      const searchLower = busquedaCiudad.toLowerCase()
+      resultado = resultado.filter(u =>
+        u.nombre.toLowerCase().includes(searchLower) ||
+        u.provincia?.toLowerCase().includes(searchLower)
+      )
+    }
+    
+    setCiudadesFiltradas(resultado)
+  }, [ubicacionesFiltradas, busquedaCiudad])
 
   const cargarUbicaciones = async () => {
     try {
@@ -231,17 +249,32 @@ export default function CircuitoPersonalizadoSection() {
         <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8">
           {/* Cantidad de personas */}
           <div className="mb-6">
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              👥 Personas
-            </label>
-            <input
-              type="number"
-              min="1"
-              max="8"
-              value={cantidadPersonas || ''}
-              onChange={(e) => setCantidadPersonas(parseInt(e.target.value) || 1)}
-              className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+            <div className="relative">
+              <input
+                type="number"
+                min="1"
+                max="8"
+                value={cantidadPersonas || ''}
+                onChange={(e) => {
+                  const valor = e.target.value
+                  if (valor === '') {
+                    setCantidadPersonas(0)
+                  } else {
+                    setCantidadPersonas(parseInt(valor) || 0)
+                  }
+                }}
+                onBlur={(e) => {
+                  if (!e.target.value || parseInt(e.target.value) < 1) {
+                    setCantidadPersonas(1)
+                  }
+                }}
+                placeholder=" "
+                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent peer"
+              />
+              <label className="absolute left-4 top-3 text-slate-500 transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:text-blue-600 peer-focus:bg-white peer-focus:px-1 peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-1 pointer-events-none">
+                👥 Personas
+              </label>
+            </div>
           </div>
 
           {/* Filtros */}
@@ -297,28 +330,42 @@ export default function CircuitoPersonalizadoSection() {
             </div>
           </div>
 
-          {/* Selector de ciudades */}
-          <div className="mb-6">
+          {/* Buscador de ciudades */}
+          <div className="mb-6 relative">
             <label className="block text-sm font-semibold text-slate-700 mb-2">
-              📍 Agregar destino a tu ruta
+              📍 Agregar a tu ruta
             </label>
-            <select
+            <input
+              type="text"
+              value={busquedaCiudad}
               onChange={(e) => {
-                const ciudadId = parseInt(e.target.value)
-                if (ciudadId) {
-                  agregarCiudad(ciudadId)
-                  e.target.value = ''
-                }
+                setBusquedaCiudad(e.target.value)
+                setShowCiudadDropdown(true)
               }}
+              onFocus={() => setShowCiudadDropdown(true)}
+              onBlur={() => setTimeout(() => setShowCiudadDropdown(false), 200)}
+              placeholder="Busca una ciudad..."
               className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Selecciona una ciudad...</option>
-              {ubicacionesFiltradas.map(ub => (
-                <option key={ub.id} value={ub.id}>
-                  {ub.nombre} - {ub.provincia}
-                </option>
-              ))}
-            </select>
+            />
+            {showCiudadDropdown && ciudadesFiltradas.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-white border-2 border-slate-200 rounded-xl shadow-lg max-h-60 overflow-auto">
+                {ciudadesFiltradas.map((ub) => (
+                  <button
+                    key={ub.id}
+                    type="button"
+                    onClick={() => {
+                      agregarCiudad(ub.id)
+                      setBusquedaCiudad('')
+                      setShowCiudadDropdown(false)
+                    }}
+                    className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors border-b border-slate-100 last:border-b-0"
+                  >
+                    <div className="font-medium text-sm text-slate-900">{ub.nombre}</div>
+                    <div className="text-xs text-slate-500">{ub.provincia}</div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Ciudades seleccionadas */}
@@ -387,27 +434,49 @@ export default function CircuitoPersonalizadoSection() {
                                 </button>
                               </div>
                               <div className="grid grid-cols-2 gap-2">
-                                <div>
-                                  <label className="block text-xs text-slate-600 mb-1">Habitaciones</label>
+                                <div className="relative">
                                   <input
                                     type="number"
                                     min="1"
                                     max="10"
-                                    value={ciudad.alojamiento.habitaciones}
-                                    onChange={(e) => actualizarAlojamiento(index, 'habitaciones', parseInt(e.target.value) || 1)}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                                    value={ciudad.alojamiento.habitaciones || ''}
+                                    onChange={(e) => {
+                                      const valor = e.target.value
+                                      actualizarAlojamiento(index, 'habitaciones', valor === '' ? 0 : parseInt(valor) || 0)
+                                    }}
+                                    onBlur={(e) => {
+                                      if (!e.target.value || parseInt(e.target.value) < 1) {
+                                        actualizarAlojamiento(index, 'habitaciones', 1)
+                                      }
+                                    }}
+                                    placeholder=" "
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm peer"
                                   />
+                                  <label className="absolute left-3 top-2 text-slate-500 text-xs transition-all duration-200 peer-placeholder-shown:top-2 peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-[10px] peer-focus:text-blue-600 peer-focus:bg-white peer-focus:px-1 peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:text-[10px] peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-1 pointer-events-none">
+                                    Habitaciones
+                                  </label>
                                 </div>
-                                <div>
-                                  <label className="block text-xs text-slate-600 mb-1">Noches</label>
+                                <div className="relative">
                                   <input
                                     type="number"
                                     min="1"
                                     max="30"
-                                    value={ciudad.alojamiento.noches}
-                                    onChange={(e) => actualizarAlojamiento(index, 'noches', parseInt(e.target.value) || 1)}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                                    value={ciudad.alojamiento.noches || ''}
+                                    onChange={(e) => {
+                                      const valor = e.target.value
+                                      actualizarAlojamiento(index, 'noches', valor === '' ? 0 : parseInt(valor) || 0)
+                                    }}
+                                    onBlur={(e) => {
+                                      if (!e.target.value || parseInt(e.target.value) < 1) {
+                                        actualizarAlojamiento(index, 'noches', 1)
+                                      }
+                                    }}
+                                    placeholder=" "
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm peer"
                                   />
+                                  <label className="absolute left-3 top-2 text-slate-500 text-xs transition-all duration-200 peer-placeholder-shown:top-2 peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-[10px] peer-focus:text-blue-600 peer-focus:bg-white peer-focus:px-1 peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:text-[10px] peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-1 pointer-events-none">
+                                    Noches
+                                  </label>
                                 </div>
                               </div>
                               <p className="text-xs text-indigo-700 text-right">
