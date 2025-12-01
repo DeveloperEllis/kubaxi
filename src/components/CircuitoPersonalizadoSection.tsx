@@ -224,29 +224,15 @@ export default function CircuitoPersonalizadoSection() {
 
   if (loading) {
     return (
-      <section id="circuito" className="py-16 px-4 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-          </div>
-        </div>
-      </section>
+      <div className="flex justify-center items-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
     )
   }
 
   return (
-    <section id="circuito" className="py-16 md:py-20 px-4 bg-gradient-to-br from-blue-50 to-indigo-50">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-800 mb-3">
-            🗺️ Circuito Personalizado
-          </h2>
-          <p className="text-slate-600 max-w-2xl mx-auto">
-            Selecciona las ciudades que visitarás en orden. Taxi disponible 24 horas.
-          </p>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8">
+    <>
+      <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8">
           {/* Cantidad de personas */}
           <div className="mb-6">
             <div className="relative">
@@ -555,7 +541,6 @@ export default function CircuitoPersonalizadoSection() {
             </div>
           )}
         </div>
-      </div>
 
       {/* Modal de reserva */}
       {showBookingModal && (
@@ -640,6 +625,6 @@ export default function CircuitoPersonalizadoSection() {
           </div>
         </div>
       )}
-    </section>
+    </>
   )
 }

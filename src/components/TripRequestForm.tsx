@@ -24,7 +24,8 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
   const [showDestinoDropdown, setShowDestinoDropdown] = useState(false)
   const [selectedOrigen, setSelectedOrigen] = useState<Ubicacion | null>(null)
   const [selectedDestino, setSelectedDestino] = useState<Ubicacion | null>(null)
-  const [filtroTipo, setFiltroTipo] = useState<string>('municipios')
+  const [filtroOrigenTipo, setFiltroOrigenTipo] = useState<string>('todos')
+  const [filtroDestinoTipo, setFiltroDestinoTipo] = useState<string>('todos')
   
   const [taxiType, setTaxiType] = useState<'colectivo' | 'privado'>('colectivo')
   const [cantidadPersonas, setCantidadPersonas] = useState(0)
@@ -61,19 +62,20 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
     let ubicacionesFiltradas = todasUbicaciones
     
     // Aplicar filtro de tipo
-    if (filtroTipo === 'municipios') {
+    if (filtroOrigenTipo === 'municipio turistico') {
       ubicacionesFiltradas = ubicacionesFiltradas.filter(
-        u => u.tipo?.toLowerCase() === 'municipio' || u.tipo?.toLowerCase() === 'municipio turistico'
+        u => u.tipo?.toLowerCase() === 'municipio turistico'
       )
-    } else if (filtroTipo === 'cayo') {
+    } else if (filtroOrigenTipo === 'cayo') {
       ubicacionesFiltradas = ubicacionesFiltradas.filter(
         u => u.tipo?.toLowerCase() === 'cayo'
       )
-    } else if (filtroTipo === 'aeropuerto') {
+    } else if (filtroOrigenTipo === 'aeropuerto') {
       ubicacionesFiltradas = ubicacionesFiltradas.filter(
         u => u.tipo?.toLowerCase() === 'aeropuerto'
       )
     }
+    // Si es 'todos', no se filtra
     
     // Aplicar búsqueda
     if (origenSearch.trim()) {
@@ -85,26 +87,27 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
     }
     
     setOrigenSuggestions(ubicacionesFiltradas)
-  }, [todasUbicaciones, filtroTipo, origenSearch])
+  }, [todasUbicaciones, filtroOrigenTipo, origenSearch])
 
   // Actualizar sugerencias de destino cuando cambia el filtro o la búsqueda
   useEffect(() => {
     let ubicacionesFiltradas = todasUbicaciones
     
     // Aplicar filtro de tipo
-    if (filtroTipo === 'municipios') {
+    if (filtroDestinoTipo === 'municipio turistico') {
       ubicacionesFiltradas = ubicacionesFiltradas.filter(
-        u => u.tipo?.toLowerCase() === 'municipio' || u.tipo?.toLowerCase() === 'municipio turistico'
+        u => u.tipo?.toLowerCase() === 'municipio turistico'
       )
-    } else if (filtroTipo === 'cayo') {
+    } else if (filtroDestinoTipo === 'cayo') {
       ubicacionesFiltradas = ubicacionesFiltradas.filter(
         u => u.tipo?.toLowerCase() === 'cayo'
       )
-    } else if (filtroTipo === 'aeropuerto') {
+    } else if (filtroDestinoTipo === 'aeropuerto') {
       ubicacionesFiltradas = ubicacionesFiltradas.filter(
         u => u.tipo?.toLowerCase() === 'aeropuerto'
       )
     }
+    // Si es 'todos', no se filtra
     
     // Aplicar búsqueda
     if (destinoSearch.trim()) {
@@ -116,7 +119,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
     }
     
     setDestinoSuggestions(ubicacionesFiltradas)
-  }, [todasUbicaciones, filtroTipo, destinoSearch])
+  }, [todasUbicaciones, filtroDestinoTipo, destinoSearch])
 
   // Detectar si origen o destino son de Oriente usando el campo region
   useEffect(() => {
@@ -236,50 +239,55 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
             </div>
           )}
 
-          {/* Filtros de Tipo de Ubicación */}
+          {/* Origen con filtros compactos */}
           <div className="mb-3">
-            <label className="block text-xs font-medium text-slate-600 mb-2">
-              Filtrar ubicaciones:
-            </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="flex gap-1 mb-1.5">
               <button
                 type="button"
-                onClick={() => setFiltroTipo('municipios')}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  filtroTipo === 'municipios'
+                onClick={() => setFiltroOrigenTipo('todos')}
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                  filtroOrigenTipo === 'todos'
                     ? 'bg-blue-600 text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                Toda Cuba
+                Todo
               </button>
               <button
                 type="button"
-                onClick={() => setFiltroTipo('cayo')}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  filtroTipo === 'cayo'
+                onClick={() => setFiltroOrigenTipo('municipio turistico')}
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                  filtroOrigenTipo === 'municipio turistico'
                     ? 'bg-blue-600 text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                 Cayos
+                Turístico
               </button>
               <button
                 type="button"
-                onClick={() => setFiltroTipo('aeropuerto')}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  filtroTipo === 'aeropuerto'
+                onClick={() => setFiltroOrigenTipo('cayo')}
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                  filtroOrigenTipo === 'cayo'
                     ? 'bg-blue-600 text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Cayos
+              </button>
+              <button
+                type="button"
+                onClick={() => setFiltroOrigenTipo('aeropuerto')}
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                  filtroOrigenTipo === 'aeropuerto'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
                 Aeropuertos
               </button>
             </div>
-          </div>
-
-          {/* Origen */}
-          <div className="mb-3 relative">
+            <div className="relative">
             <input
               type="text"
               value={selectedOrigen ? selectedOrigen.nombre : origenSearch}
@@ -328,10 +336,58 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                 ))}
               </div>
             )}
+            </div>
           </div>
 
-          {/* Destino */}
-          <div className="mb-3 relative">
+          {/* Destino con filtros compactos */}
+          <div className="mb-3">
+            <div className="flex gap-1 mb-1.5">
+              <button
+                type="button"
+                onClick={() => setFiltroDestinoTipo('todos')}
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                  filtroDestinoTipo === 'todos'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Todo
+              </button>
+              <button
+                type="button"
+                onClick={() => setFiltroDestinoTipo('municipio turistico')}
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                  filtroDestinoTipo === 'municipio turistico'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Turístico
+              </button>
+              <button
+                type="button"
+                onClick={() => setFiltroDestinoTipo('cayo')}
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                  filtroDestinoTipo === 'cayo'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Cayos
+              </button>
+              <button
+                type="button"
+                onClick={() => setFiltroDestinoTipo('aeropuerto')}
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                  filtroDestinoTipo === 'aeropuerto'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Aeropuertos
+              </button>
+            </div>
+            <div className="relative">
             <input
               type="text"
               value={selectedDestino ? selectedDestino.nombre : destinoSearch}
@@ -380,6 +436,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                 ))}
               </div>
             )}
+            </div>
           </div>
 
           {/* Mensaje de advertencia para rutas de Oriente */}

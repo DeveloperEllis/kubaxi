@@ -16,6 +16,7 @@ export default function Home() {
   const [activeSection, setActiveSection] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showNavbar, setShowNavbar] = useState(false);
+  const [reservaMode, setReservaMode] = useState<'transfer' | 'circuito'>('transfer');
 
   const scrollToSection = (sectionId: string) => {
     setActiveSection(sectionId);
@@ -111,9 +112,12 @@ export default function Home() {
                 🏝️ {t('hero.excursions')}
               </button>
               <button
-                onClick={() => scrollToSection('circuito')}
+                onClick={() => {
+                  setReservaMode('circuito')
+                  scrollToSection('reservas')
+                }}
                 className={`px-4 py-3 rounded-lg text-left font-semibold transition-colors ${
-                  activeSection === 'circuito'
+                  activeSection === 'reservas' && reservaMode === 'circuito'
                     ? 'bg-blue-600 text-white'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
@@ -198,9 +202,12 @@ export default function Home() {
             <nav className="pt-4">
               <div className="grid grid-cols-2 md:flex md:flex-row justify-center gap-3 md:gap-4 max-w-4xl mx-auto">
                 <button
-                  onClick={() => scrollToSection('reservas')}
+                  onClick={() => {
+                    setReservaMode('transfer')
+                    scrollToSection('reservas')
+                  }}
                   className={`px-5 md:px-8 py-3.5 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 ${
-                    activeSection === 'reservas'
+                    activeSection === 'reservas' && reservaMode === 'transfer'
                       ? 'bg-white text-blue-600 shadow-xl'
                       : 'bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border border-white/20'
                   }`}
@@ -224,9 +231,12 @@ export default function Home() {
                   </span>
                 </button>
                 <button
-                  onClick={() => scrollToSection('circuito')}
+                  onClick={() => {
+                    setReservaMode('circuito')
+                    scrollToSection('reservas')
+                  }}
                   className={`px-5 md:px-8 py-3.5 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 ${
-                    activeSection === 'circuito'
+                    activeSection === 'reservas' && reservaMode === 'circuito'
                       ? 'bg-white text-blue-600 shadow-xl'
                       : 'bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border border-white/20'
                   }`}
@@ -305,22 +315,47 @@ export default function Home() {
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-10">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-800 mb-3">
-              {t('tripForm.title')}
+              {reservaMode === 'transfer' ? t('tripForm.title') : '🗺️ Circuito Personalizado'}
             </h2>
             <p className="text-slate-600 text-lg">
-              {t('hero.subtitle')}
+              {reservaMode === 'transfer' ? t('hero.subtitle') : 'Selecciona las ciudades que visitarás en orden. Taxi disponible 24 horas.'}
             </p>
           </div>
 
-          <TripRequestForm onBack={() => {}} />
+          {/* Selector de modo */}
+          <div className="flex gap-3 mb-8 max-w-md mx-auto">
+            <button
+              onClick={() => setReservaMode('transfer')}
+              className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
+                reservaMode === 'transfer'
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              🚕 Transfer
+            </button>
+            <button
+              onClick={() => setReservaMode('circuito')}
+              className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
+                reservaMode === 'circuito'
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              🗺️ Circuito
+            </button>
+          </div>
+
+          {reservaMode === 'transfer' ? (
+            <TripRequestForm onBack={() => {}} />
+          ) : (
+            <CircuitoPersonalizadoSection />
+          )}
         </div>
       </section>
 
       {/* Excursiones Section - Dinámico */}
       <ExcursionesSection />
-
-      {/* Circuito Personalizado Section */}
-      <CircuitoPersonalizadoSection />
 
       {/* Personalizado Section */}
       <section id="personalizado" className="py-16 md:py-20 px-4 bg-gradient-to-br from-slate-50 to-slate-100 scroll-mt-4">
