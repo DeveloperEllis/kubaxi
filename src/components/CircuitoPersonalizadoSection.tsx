@@ -50,12 +50,15 @@ export default function CircuitoPersonalizadoSection() {
   useEffect(() => {
     let resultado = ubicaciones
     
-    // Aplicar filtro según si estamos buscando origen o destinos
-    const filtroActivo = origenId ? filtroDestinos : filtroOrigen
-    
-    if (filtroActivo !== 'todo') {
-      const tipoFiltro = filtroActivo === 'turistico' ? 'municipio turistico' : filtroActivo
-      resultado = resultado.filter(u => u.tipo?.toLowerCase() === tipoFiltro.toLowerCase())
+    // Solo aplicar filtros si la opción de mostrar filtros está activada
+    if (mostrarFiltros) {
+      // Aplicar filtro según si estamos buscando origen o destinos
+      const filtroActivo = origenId ? filtroDestinos : filtroOrigen
+      
+      if (filtroActivo !== 'todo') {
+        const tipoFiltro = filtroActivo === 'turistico' ? 'municipio turistico' : filtroActivo
+        resultado = resultado.filter(u => u.tipo?.toLowerCase() === tipoFiltro.toLowerCase())
+      }
     }
     
     if (busquedaCiudad.trim()) {
@@ -67,7 +70,7 @@ export default function CircuitoPersonalizadoSection() {
     }
     
     setCiudadesFiltradas(resultado)
-  }, [ubicaciones, busquedaCiudad, filtroOrigen, filtroDestinos, origenId])
+  }, [ubicaciones, busquedaCiudad, filtroOrigen, filtroDestinos, origenId, mostrarFiltros])
 
   const cargarUbicaciones = async () => {
     try {
@@ -222,6 +225,8 @@ export default function CircuitoPersonalizadoSection() {
         nombre: formData.get('nombre'),
         email: formData.get('email'),
         telefono: formData.get('telefono'),
+        fechaInicio: formData.get('fecha'),
+        horaRecogida: formData.get('hora'),
         ruta,
         personas: cantidadPersonas,
         tipoVehiculo: tipoVehiculo === 'clasico' ? 'Clásico' : tipoVehiculo === 'moderno' ? 'Moderno' : tipoVehiculo === 'van' ? 'Van' : 'No especificado',
@@ -480,7 +485,7 @@ export default function CircuitoPersonalizadoSection() {
           />
           {origenId && showCiudadDropdown && ciudadesFiltradas.length > 0 && (
             <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-60 overflow-auto">
-              {ciudadesFiltradas.filter(ub => ub.id !== origenId).map((ub) => (
+              {ciudadesFiltradas.map((ub) => (
                 <button
                   key={ub.id}
                   type="button"
@@ -536,17 +541,13 @@ export default function CircuitoPersonalizadoSection() {
                         )}
                       </div>
                       <div className="flex items-center gap-1 flex-shrink-0">
-                        {puedeAlojarse && (
+                        {puedeAlojarse && !ciudad.alojamiento && (
                           <button
                             onClick={() => toggleAlojamiento(index)}
-                            className={`px-1.5 py-0.5 text-xs rounded ${
-                              ciudad.alojamiento
-                                ? 'text-indigo-600 hover:bg-indigo-50'
-                                : 'text-slate-500 hover:bg-slate-100'
-                            }`}
-                            title={ciudad.alojamiento ? 'Quitar alojamiento' : 'Agregar alojamiento'}
+                            className="px-2 py-0.5 text-xs rounded bg-slate-100 text-slate-700 hover:bg-slate-200"
+                            title="Agregar alojamiento"
                           >
-                            🏨
+                            Alojarme
                           </button>
                         )}
                         {index > 0 && (
@@ -577,13 +578,7 @@ export default function CircuitoPersonalizadoSection() {
                     {/* Alojamiento inline */}
                     {ciudad.alojamiento && (
                       <div className="mt-2 pt-2 border-t border-slate-100">
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-xs font-medium text-indigo-700">🏨 Alojamiento</span>
-                          <span className="text-xs text-indigo-600 font-semibold">
-                            ${ciudad.alojamiento.habitaciones * ciudad.alojamiento.noches * 30}
-                          </span>
-                        </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 items-end">
                           <div className="flex-1">
                             <label className="block text-[10px] text-slate-600 mb-0.5">Habitaciones</label>
                             <input
@@ -622,6 +617,13 @@ export default function CircuitoPersonalizadoSection() {
                               className="w-full px-2 py-1 border border-slate-300 rounded text-xs"
                             />
                           </div>
+                          <button
+                            onClick={() => toggleAlojamiento(index)}
+                            className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                            title="Quitar alojamiento"
+                          >
+                            ✕
+                          </button>
                         </div>
                       </div>
                     )}
@@ -746,6 +748,27 @@ export default function CircuitoPersonalizadoSection() {
                   className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Fecha </label>
+                  <input
+                    type="date"
+                    name="fecha"
+                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Hora de recogida</label>
+                  <input
+                    type="time"
+                    name="hora"
+                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
               </div>
 
               <div>
