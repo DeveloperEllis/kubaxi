@@ -18,8 +18,12 @@ export default function CircuitoPersonalizadoSection() {
   const t = useTranslations('customCircuit')
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([])
   const [ubicacionesFiltradas, setUbicacionesFiltradas] = useState<Ubicacion[]>([])
-  const [filtroTipo, setFiltroTipo] = useState<string>('todos')
+  const [mostrarFiltros, setMostrarFiltros] = useState(false)
+  const [filtroOrigen, setFiltroOrigen] = useState<string>('todo')
+  const [filtroDestinos, setFiltroDestinos] = useState<string>('todo')
   const [cantidadPersonas, setCantidadPersonas] = useState(1)
+  const [tipoVehiculo, setTipoVehiculo] = useState<'clasico' | 'moderno' | 'van' | ''>('')
+  const [origenId, setOrigenId] = useState<number | null>(null)
   const [ciudadesSeleccionadas, setCiudadesSeleccionadas] = useState<CiudadCircuito[]>([])
   const [loading, setLoading] = useState(true)
   const [calculando, setCalculando] = useState(false)
@@ -36,15 +40,23 @@ export default function CircuitoPersonalizadoSection() {
 
   useEffect(() => {
     aplicarFiltro()
-  }, [ubicaciones, filtroTipo])
+  }, [ubicaciones, filtroOrigen, filtroDestinos])
 
   useEffect(() => {
     calcularRuta()
-  }, [ciudadesSeleccionadas, cantidadPersonas])
+  }, [ciudadesSeleccionadas, cantidadPersonas, origenId])
 
   // Actualizar ciudades filtradas cuando cambia el filtro o la búsqueda
   useEffect(() => {
-    let resultado = ubicacionesFiltradas
+    let resultado = ubicaciones
+    
+    // Aplicar filtro según si estamos buscando origen o destinos
+    const filtroActivo = origenId ? filtroDestinos : filtroOrigen
+    
+    if (filtroActivo !== 'todo') {
+      const tipoFiltro = filtroActivo === 'turistico' ? 'municipio turistico' : filtroActivo
+      resultado = resultado.filter(u => u.tipo?.toLowerCase() === tipoFiltro.toLowerCase())
+    }
     
     if (busquedaCiudad.trim()) {
       const searchLower = busquedaCiudad.toLowerCase()
@@ -55,7 +67,7 @@ export default function CircuitoPersonalizadoSection() {
     }
     
     setCiudadesFiltradas(resultado)
-  }, [ubicacionesFiltradas, busquedaCiudad])
+  }, [ubicaciones, busquedaCiudad, filtroOrigen, filtroDestinos, origenId])
 
   const cargarUbicaciones = async () => {
     try {
@@ -71,16 +83,12 @@ export default function CircuitoPersonalizadoSection() {
   }
 
   const aplicarFiltro = () => {
-    if (filtroTipo === 'todos') {
-      setUbicacionesFiltradas(ubicaciones)
-    } else {
-      const filtradas = ubicaciones.filter(u => u.tipo?.toLowerCase() === filtroTipo.toLowerCase())
-      setUbicacionesFiltradas(filtradas)
-    }
+    // Los filtros se aplicarán dinámicamente en el useEffect de ciudadesFiltradas
+    setUbicacionesFiltradas(ubicaciones)
   }
 
   const calcularRuta = async () => {
-    if (ciudadesSeleccionadas.length < 2) {
+    if (!origenId || ciudadesSeleccionadas.length < 1) {
       setPrecioTransporte(0)
       setDistanciaTotal(0)
       return
@@ -91,11 +99,18 @@ export default function CircuitoPersonalizadoSection() {
       let precioTotal = 0
       let distanciaTotal = 0
 
+      // Calcular desde origen al primer destino
+      const primerDestino = ciudadesSeleccionadas[0].ciudadId
+      let resultado = await calculatePrice(origenId, primerDestino, 'privado', cantidadPersonas)
+      precioTotal += resultado.price
+      distanciaTotal += resultado.distance_km
+
+      // Calcular entre destinos
       for (let i = 0; i < ciudadesSeleccionadas.length - 1; i++) {
         const origen = ciudadesSeleccionadas[i].ciudadId
         const destino = ciudadesSeleccionadas[i + 1].ciudadId
 
-        const resultado = await calculatePrice(origen, destino, 'privado', cantidadPersonas)
+        resultado = await calculatePrice(origen, destino, 'privado', cantidadPersonas)
         precioTotal += resultado.price
         distanciaTotal += resultado.distance_km
       }
@@ -186,16 +201,17 @@ export default function CircuitoPersonalizadoSection() {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
     
-    const ruta = ciudadesSeleccionadas.map((ciudad, index) => {
+    const origenNombre = ubicaciones.find(u => u.id === origenId)?.nombre || ''
+    const ruta = [`🏁 Origen: ${origenNombre}`, ...ciudadesSeleccionadas.map((ciudad, index) => {
       const ubicacion = ubicaciones.find(u => u.id === ciudad.ciudadId)
-      let texto = `${index + 1}. ${ubicacion?.nombre}`
+      let texto = `📍 Destino ${index + 1}: ${ubicacion?.nombre}`
       
       if (ciudad.alojamiento) {
         texto += ` (🏨 ${ciudad.alojamiento.noches} ${ciudad.alojamiento.noches === 1 ? 'noche' : 'noches'}, ${ciudad.alojamiento.habitaciones} hab)`
       }
       
       return texto
-    }).join('\n')
+    })].join('\n')
 
     const totalNoches = ciudadesSeleccionadas.reduce((total, c) => total + (c.alojamiento?.noches || 0), 0)
     const diasCircuito = calcularDiasTotales()
@@ -208,6 +224,7 @@ export default function CircuitoPersonalizadoSection() {
         telefono: formData.get('telefono'),
         ruta,
         personas: cantidadPersonas,
+        tipoVehiculo: tipoVehiculo === 'clasico' ? 'Clásico' : tipoVehiculo === 'moderno' ? 'Moderno' : tipoVehiculo === 'van' ? 'Van' : 'No especificado',
         dias: diasCircuito,
         distancia: distanciaTotal,
         precioTransporte: precioTransporte * diasCircuito,
@@ -232,315 +249,451 @@ export default function CircuitoPersonalizadoSection() {
 
   return (
     <>
-      <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8">
-          {/* Cantidad de personas */}
-          <div className="mb-6">
-            <div className="relative">
-              <input
-                type="number"
-                min="1"
-                max="8"
-                value={cantidadPersonas || ''}
-                onChange={(e) => {
-                  const valor = e.target.value
-                  if (valor === '') {
-                    setCantidadPersonas(0)
-                  } else {
-                    setCantidadPersonas(parseInt(valor) || 0)
-                  }
-                }}
-                onBlur={(e) => {
-                  if (!e.target.value || parseInt(e.target.value) < 1) {
-                    setCantidadPersonas(1)
-                  }
-                }}
-                placeholder=" "
-                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent peer"
-              />
-              <label className="absolute left-4 top-3 text-slate-500 transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:text-blue-600 peer-focus:bg-white peer-focus:px-1 peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-1 pointer-events-none">
-                👥 Personas
-              </label>
-            </div>
-          </div>
-
-          {/* Filtros */}
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-slate-700 mb-3">
-              🔍 Filtrar por tipo
-            </label>
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              <button
-                type="button"
-                onClick={() => setFiltroTipo('todos')}
-                className={`px-3 py-2 text-sm rounded-lg font-medium transition-all ${
-                  filtroTipo === 'todos'
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                🌎 Todos
-              </button>
-              <button
-                type="button"
-                onClick={() => setFiltroTipo('municipio turistico')}
-                className={`px-3 py-2 text-sm rounded-lg font-medium transition-all ${
-                  filtroTipo === 'municipio turistico'
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                🏛️ Turísticos
-              </button>
-              <button
-                type="button"
-                onClick={() => setFiltroTipo('cayo')}
-                className={`px-3 py-2 text-sm rounded-lg font-medium transition-all ${
-                  filtroTipo === 'cayo'
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                🏝️ Cayos
-              </button>
-              <button
-                type="button"
-                onClick={() => setFiltroTipo('aeropuerto')}
-                className={`px-3 py-2 text-sm rounded-lg font-medium transition-all ${
-                  filtroTipo === 'aeropuerto'
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                ✈️ Aeropuertos
-              </button>
-            </div>
-          </div>
-
-          {/* Buscador de ciudades */}
-          <div className="mb-6 relative">
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              📍 Agregar a tu ruta
-            </label>
+      <div className="bg-white rounded-2xl shadow-xl p-6">
+        {/* Personas y Tipo de Vehículo - Grid 2 columnas */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="relative">
             <input
-              type="text"
-              value={busquedaCiudad}
+              type="number"
+              min="1"
+              max="8"
+              value={cantidadPersonas || ''}
               onChange={(e) => {
+                const valor = e.target.value
+                if (valor === '') {
+                  setCantidadPersonas(0)
+                } else {
+                  setCantidadPersonas(parseInt(valor) || 0)
+                }
+              }}
+              onBlur={(e) => {
+                if (!e.target.value || parseInt(e.target.value) < 1) {
+                  setCantidadPersonas(1)
+                }
+              }}
+              placeholder=" "
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent peer text-sm"
+            />
+            <label className="absolute left-4 top-2.5 text-slate-500 text-sm transition-all duration-200 peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:text-blue-600 peer-focus:bg-white peer-focus:px-1 peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-1 pointer-events-none">
+              👥 Personas
+            </label>
+          </div>
+          <div className="relative">
+            <select
+              value={tipoVehiculo}
+              onChange={(e) => setTipoVehiculo(e.target.value as 'clasico' | 'moderno' | 'van' | '')}
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm appearance-none bg-white cursor-pointer"
+            >
+              <option value="" disabled>🚗 Tipo de vehículo</option>
+              <option value="clasico">🚗 Clásico</option>
+              <option value="moderno">🚙 Moderno</option>
+              <option value="van">🚐 Van</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Checkbox mostrar filtros */}
+        <div className="mb-4">
+          <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={mostrarFiltros}
+              onChange={(e) => setMostrarFiltros(e.target.checked)}
+              className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-500"
+            />
+            <span>Mostrar filtros</span>
+          </label>
+        </div>
+
+        {/* Filtros de Origen */}
+        {mostrarFiltros && !origenId && (
+          <div className="mb-4">
+            <label className="block text-xs font-semibold text-slate-700 mb-2">
+               Filtrar origen
+            </label>
+            <div className="flex gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setFiltroOrigen('todo')}
+                className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
+                  filtroOrigen === 'todo'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                Todo
+              </button>
+              <button
+                type="button"
+                onClick={() => setFiltroOrigen('turistico')}
+                className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
+                  filtroOrigen === 'turistico'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                Turístico
+              </button>
+              <button
+                type="button"
+                onClick={() => setFiltroOrigen('cayo')}
+                className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
+                  filtroOrigen === 'cayo'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                Cayo
+              </button>
+              <button
+                type="button"
+                onClick={() => setFiltroOrigen('aeropuerto')}
+                className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
+                  filtroOrigen === 'aeropuerto'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                Aeropuerto
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Origen */}
+        <div className="mb-4 relative">
+          <input
+            type="text"
+            value={origenId ? ubicaciones.find(u => u.id === origenId)?.nombre || '' : busquedaCiudad}
+            onChange={(e) => {
+              if (!origenId) {
                 setBusquedaCiudad(e.target.value)
                 setShowCiudadDropdown(true)
-              }}
-              onFocus={() => setShowCiudadDropdown(true)}
-              onBlur={() => setTimeout(() => setShowCiudadDropdown(false), 200)}
-              placeholder="Busca una ciudad..."
-              className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            {showCiudadDropdown && ciudadesFiltradas.length > 0 && (
-              <div className="absolute z-10 w-full mt-1 bg-white border-2 border-slate-200 rounded-xl shadow-lg max-h-60 overflow-auto">
-                {ciudadesFiltradas.map((ub) => (
-                  <button
-                    key={ub.id}
-                    type="button"
-                    onClick={() => {
-                      agregarCiudad(ub.id)
-                      setBusquedaCiudad('')
-                      setShowCiudadDropdown(false)
-                    }}
-                    className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors border-b border-slate-100 last:border-b-0"
-                  >
-                    <div className="font-medium text-sm text-slate-900">{ub.nombre}</div>
-                    <div className="text-xs text-slate-500">{ub.provincia}</div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Ciudades seleccionadas */}
-          {ciudadesSeleccionadas.length > 0 && (
-            <div className="mb-6">
-              <p className="text-sm font-semibold text-slate-700 mb-3">Tu ruta:</p>
-              <div className="space-y-2">
-                {ciudadesSeleccionadas.map((ciudad, index) => {
-                  const ubicacion = ubicaciones.find(u => u.id === ciudad.ciudadId)
-                  const puedeAlojarse = puedeAgregarAlojamiento(ciudad.ciudadId)
-                  
-                  return (
-                    <div key={index} className="bg-slate-50 rounded-xl p-4 border-2 border-slate-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-blue-600">{index + 1}.</span>
-                          <span className="font-medium text-slate-800">{ubicacion?.nombre}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {index > 0 && (
-                            <button
-                              onClick={() => moverCiudad(index, 'arriba')}
-                              className="px-2 py-1 text-blue-600 hover:bg-blue-50 rounded"
-                              title="Mover arriba"
-                            >
-                              ↑
-                            </button>
-                          )}
-                          {index < ciudadesSeleccionadas.length - 1 && (
-                            <button
-                              onClick={() => moverCiudad(index, 'abajo')}
-                              className="px-2 py-1 text-blue-600 hover:bg-blue-50 rounded"
-                              title="Mover abajo"
-                            >
-                              ↓
-                            </button>
-                          )}
-                          <button
-                            onClick={() => eliminarCiudad(index)}
-                            className="px-2 py-1 text-red-600 hover:bg-red-50 rounded"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Alojamiento */}
-                      {puedeAlojarse && (
-                        <div className="mt-3 pt-3 border-t border-slate-200">
-                          {!ciudad.alojamiento ? (
-                            <button
-                              onClick={() => toggleAlojamiento(index)}
-                              className="w-full px-3 py-2 bg-indigo-50 text-indigo-700 text-sm rounded-lg hover:bg-indigo-100 transition-colors"
-                            >
-                              + Agregar alojamiento
-                            </button>
-                          ) : (
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium text-indigo-700">🏨 Alojamiento</span>
-                                <button
-                                  onClick={() => toggleAlojamiento(index)}
-                                  className="text-xs text-red-600 hover:text-red-800"
-                                >
-                                  Quitar
-                                </button>
-                              </div>
-                              <div className="grid grid-cols-2 gap-2">
-                                <div className="relative">
-                                  <input
-                                    type="number"
-                                    min="1"
-                                    max="10"
-                                    value={ciudad.alojamiento.habitaciones || ''}
-                                    onChange={(e) => {
-                                      const valor = e.target.value
-                                      actualizarAlojamiento(index, 'habitaciones', valor === '' ? 0 : parseInt(valor) || 0)
-                                    }}
-                                    onBlur={(e) => {
-                                      if (!e.target.value || parseInt(e.target.value) < 1) {
-                                        actualizarAlojamiento(index, 'habitaciones', 1)
-                                      }
-                                    }}
-                                    placeholder=" "
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm peer"
-                                  />
-                                  <label className="absolute left-3 top-2 text-slate-500 text-xs transition-all duration-200 peer-placeholder-shown:top-2 peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-[10px] peer-focus:text-blue-600 peer-focus:bg-white peer-focus:px-1 peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:text-[10px] peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-1 pointer-events-none">
-                                    Habitaciones
-                                  </label>
-                                </div>
-                                <div className="relative">
-                                  <input
-                                    type="number"
-                                    min="1"
-                                    max="30"
-                                    value={ciudad.alojamiento.noches || ''}
-                                    onChange={(e) => {
-                                      const valor = e.target.value
-                                      actualizarAlojamiento(index, 'noches', valor === '' ? 0 : parseInt(valor) || 0)
-                                    }}
-                                    onBlur={(e) => {
-                                      if (!e.target.value || parseInt(e.target.value) < 1) {
-                                        actualizarAlojamiento(index, 'noches', 1)
-                                      }
-                                    }}
-                                    placeholder=" "
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm peer"
-                                  />
-                                  <label className="absolute left-3 top-2 text-slate-500 text-xs transition-all duration-200 peer-placeholder-shown:top-2 peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-[10px] peer-focus:text-blue-600 peer-focus:bg-white peer-focus:px-1 peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:text-[10px] peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-1 pointer-events-none">
-                                    Noches
-                                  </label>
-                                </div>
-                              </div>
-                              <p className="text-xs text-indigo-700 text-right">
-                                ${ciudad.alojamiento.habitaciones * ciudad.alojamiento.noches * 30}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
+              }
+            }}
+            onFocus={() => !origenId && setShowCiudadDropdown(true)}
+            onBlur={() => setTimeout(() => setShowCiudadDropdown(false), 200)}
+            placeholder="📍 Origen del circuito..."
+            className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            readOnly={!!origenId}
+          />
+          {origenId && (
+            <button
+              onClick={() => setOrigenId(null)}
+              className="absolute right-3 top-2.5 text-red-600 hover:text-red-800 text-sm"
+            >
+              ✕
+            </button>
           )}
-
-          {/* Resumen */}
-          {ciudadesSeleccionadas.length >= 2 && (
-            <div className="space-y-4">
-              <div className="p-4 bg-slate-50 rounded-xl">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-slate-600">Distancia:</span>
-                  <span className="font-semibold">{calculando ? '...' : `${distanciaTotal} km`}</span>
-                </div>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-slate-600">Días:</span>
-                  <span className="font-semibold">{calcularDiasTotales()}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">Personas:</span>
-                  <span className="font-semibold">{cantidadPersonas}</span>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between p-3 bg-blue-50 rounded-lg">
-                  <span className="text-sm text-blue-800">🚕 Transporte</span>
-                  <span className="font-bold text-blue-900">
-                    ${calculando ? '...' : precioTransporte * calcularDiasTotales()}
-                  </span>
-                </div>
-
-                {calcularPrecioAlojamiento() > 0 && (
-                  <div className="flex justify-between p-3 bg-indigo-50 rounded-lg">
-                    <span className="text-sm text-indigo-800">🏨 Alojamiento</span>
-                    <span className="font-bold text-indigo-900">${calcularPrecioAlojamiento()}</span>
-                  </div>
-                )}
-
-                <div className="flex justify-between p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl">
-                  <span className="font-semibold">💰 Total</span>
-                  <span className="text-xl font-bold">
-                    ${calculando ? '...' : calcularPrecioTotal()}
-                  </span>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setShowBookingModal(true)}
-                disabled={calculando}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-bold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {calculando ? 'Calculando...' : 'Solicitar circuito'}
-              </button>
-
-              <p className="text-xs text-center text-slate-500">
-                ℹ️ Taxi disponible 24 horas durante todo el circuito
-              </p>
-            </div>
-          )}
-
-          {ciudadesSeleccionadas.length < 2 && (
-            <div className="text-center py-12 text-slate-500">
-              <p className="text-4xl mb-2">📍</p>
-              <p>Selecciona al menos 2 ciudades para comenzar</p>
+          {!origenId && showCiudadDropdown && ciudadesFiltradas.length > 0 && (
+            <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+              {ciudadesFiltradas.map((ub) => (
+                <button
+                  key={ub.id}
+                  type="button"
+                  onClick={() => {
+                    setOrigenId(ub.id)
+                    setBusquedaCiudad('')
+                    setShowCiudadDropdown(false)
+                  }}
+                  className="w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors border-b border-slate-100 last:border-b-0"
+                >
+                  <div className="font-medium text-sm text-slate-900">{ub.nombre}</div>
+                  <div className="text-xs text-slate-500">{ub.provincia}</div>
+                </button>
+              ))}
             </div>
           )}
         </div>
+
+        {/* Filtros de Destinos */}
+        {mostrarFiltros && origenId && (
+          <div className="mb-4">
+            <label className="block text-xs font-semibold text-slate-700 mb-2">
+              📍 Filtrar destinos
+            </label>
+            <div className="flex gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setFiltroDestinos('todo')}
+                className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
+                  filtroDestinos === 'todo'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                Todo
+              </button>
+              <button
+                type="button"
+                onClick={() => setFiltroDestinos('turistico')}
+                className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
+                  filtroDestinos === 'turistico'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                Turístico
+              </button>
+              <button
+                type="button"
+                onClick={() => setFiltroDestinos('cayo')}
+                className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
+                  filtroDestinos === 'cayo'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                Cayo
+              </button>
+              <button
+                type="button"
+                onClick={() => setFiltroDestinos('aeropuerto')}
+                className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
+                  filtroDestinos === 'aeropuerto'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                Aeropuerto
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Buscador de destinos */}
+        <div className="mb-4 relative">
+          <input
+            type="text"
+            value={origenId ? busquedaCiudad : ''}
+            onChange={(e) => {
+              if (origenId) {
+                setBusquedaCiudad(e.target.value)
+                setShowCiudadDropdown(true)
+              }
+            }}
+            onFocus={() => origenId && setShowCiudadDropdown(true)}
+            onBlur={() => setTimeout(() => setShowCiudadDropdown(false), 200)}
+            placeholder={origenId ? "📍 Agregar destinos..." : "⚠️ Primero selecciona un origen"}
+            disabled={!origenId}
+            className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
+          />
+          {origenId && showCiudadDropdown && ciudadesFiltradas.length > 0 && (
+            <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+              {ciudadesFiltradas.filter(ub => ub.id !== origenId).map((ub) => (
+                <button
+                  key={ub.id}
+                  type="button"
+                  onClick={() => {
+                    agregarCiudad(ub.id)
+                    setBusquedaCiudad('')
+                    setShowCiudadDropdown(false)
+                  }}
+                  className="w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors border-b border-slate-100 last:border-b-0"
+                >
+                  <div className="font-medium text-sm text-slate-900">{ub.nombre}</div>
+                  <div className="text-xs text-slate-500">{ub.provincia}</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Ruta seleccionada - compacta */}
+        {(origenId || ciudadesSeleccionadas.length > 0) && (
+          <div className="mb-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
+            <div className="text-xs font-semibold text-slate-600 mb-2">Tu ruta:</div>
+            
+            {/* Origen */}
+            {origenId && (
+              <div className="bg-green-50 rounded-lg p-2 border border-green-200 mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-green-600">🏁</span>
+                  <span className="text-sm font-semibold text-green-800">
+                    {ubicaciones.find(u => u.id === origenId)?.nombre}
+                  </span>
+                  <span className="text-xs text-green-600 ml-auto">Origen</span>
+                </div>
+              </div>
+            )}
+            
+            {/* Destinos */}
+            <div className="space-y-1.5">
+              {ciudadesSeleccionadas.map((ciudad, index) => {
+                const ubicacion = ubicaciones.find(u => u.id === ciudad.ciudadId)
+                const puedeAlojarse = puedeAgregarAlojamiento(ciudad.ciudadId)
+                
+                return (
+                  <div key={index} className="bg-white rounded-lg p-2 border border-slate-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span className="text-xs font-bold text-blue-600 flex-shrink-0">📍</span>
+                        <span className="text-sm font-medium text-slate-800 truncate">{ubicacion?.nombre}</span>
+                        {ciudad.alojamiento && (
+                          <span className="text-xs text-indigo-600 flex-shrink-0">
+                            🏨 {ciudad.alojamiento.noches}n
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {puedeAlojarse && (
+                          <button
+                            onClick={() => toggleAlojamiento(index)}
+                            className={`px-1.5 py-0.5 text-xs rounded ${
+                              ciudad.alojamiento
+                                ? 'text-indigo-600 hover:bg-indigo-50'
+                                : 'text-slate-500 hover:bg-slate-100'
+                            }`}
+                            title={ciudad.alojamiento ? 'Quitar alojamiento' : 'Agregar alojamiento'}
+                          >
+                            🏨
+                          </button>
+                        )}
+                        {index > 0 && (
+                          <button
+                            onClick={() => moverCiudad(index, 'arriba')}
+                            className="px-1.5 py-0.5 text-blue-600 hover:bg-blue-50 rounded text-xs"
+                          >
+                            ↑
+                          </button>
+                        )}
+                        {index < ciudadesSeleccionadas.length - 1 && (
+                          <button
+                            onClick={() => moverCiudad(index, 'abajo')}
+                            className="px-1.5 py-0.5 text-blue-600 hover:bg-blue-50 rounded text-xs"
+                          >
+                            ↓
+                          </button>
+                        )}
+                        <button
+                          onClick={() => eliminarCiudad(index)}
+                          className="px-1.5 py-0.5 text-red-600 hover:bg-red-50 rounded text-xs"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {/* Alojamiento inline */}
+                    {ciudad.alojamiento && (
+                      <div className="mt-2 pt-2 border-t border-slate-100">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xs font-medium text-indigo-700">🏨 Alojamiento</span>
+                          <span className="text-xs text-indigo-600 font-semibold">
+                            ${ciudad.alojamiento.habitaciones * ciudad.alojamiento.noches * 30}
+                          </span>
+                        </div>
+                        <div className="flex gap-2">
+                          <div className="flex-1">
+                            <label className="block text-[10px] text-slate-600 mb-0.5">Habitaciones</label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="10"
+                              value={ciudad.alojamiento.habitaciones || ''}
+                              onChange={(e) => {
+                                const valor = e.target.value
+                                actualizarAlojamiento(index, 'habitaciones', valor === '' ? 0 : parseInt(valor) || 0)
+                              }}
+                              onBlur={(e) => {
+                                if (!e.target.value || parseInt(e.target.value) < 1) {
+                                  actualizarAlojamiento(index, 'habitaciones', 1)
+                                }
+                              }}
+                              className="w-full px-2 py-1 border border-slate-300 rounded text-xs"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <label className="block text-[10px] text-slate-600 mb-0.5">Noches</label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="30"
+                              value={ciudad.alojamiento.noches || ''}
+                              onChange={(e) => {
+                                const valor = e.target.value
+                                actualizarAlojamiento(index, 'noches', valor === '' ? 0 : parseInt(valor) || 0)
+                              }}
+                              onBlur={(e) => {
+                                if (!e.target.value || parseInt(e.target.value) < 1) {
+                                  actualizarAlojamiento(index, 'noches', 1)
+                                }
+                              }}
+                              className="w-full px-2 py-1 border border-slate-300 rounded text-xs"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Resumen compacto */}
+        {origenId && ciudadesSeleccionadas.length >= 1 ? (
+          <div className="space-y-2">
+            <div className="p-2.5 bg-slate-50 rounded-lg text-xs">
+              <div className="flex justify-between mb-1">
+                <span className="text-slate-600">Distancia:</span>
+                <span className="font-semibold">{calculando ? '...' : `${distanciaTotal} km`}</span>
+              </div>
+              <div className="flex justify-between mb-1">
+                <span className="text-slate-600">Días:</span>
+                <span className="font-semibold">{calcularDiasTotales()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-600">Personas:</span>
+                <span className="font-semibold">{cantidadPersonas}</span>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="flex justify-between p-2 bg-blue-50 rounded-lg text-xs">
+                <span className="text-blue-800">🚕 Transporte</span>
+                <span className="font-bold text-blue-900">
+                  ${calculando ? '...' : precioTransporte * calcularDiasTotales()}
+                </span>
+              </div>
+
+              {calcularPrecioAlojamiento() > 0 && (
+                <div className="flex justify-between p-2 bg-indigo-50 rounded-lg text-xs">
+                  <span className="text-indigo-800">🏨 Alojamiento</span>
+                  <span className="font-bold text-indigo-900">${calcularPrecioAlojamiento()}</span>
+                </div>
+              )}
+
+              <div className="flex justify-between p-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg">
+                <span className="font-semibold text-sm">💰 Total</span>
+                <span className="text-lg font-bold">
+                  ${calculando ? '...' : calcularPrecioTotal()}
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowBookingModal(true)}
+              disabled={calculando}
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg font-bold text-sm hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {calculando ? 'Calculando...' : 'Solicitar circuito'}
+            </button>
+
+            <p className="text-xs text-center text-slate-500">
+              Taxi disponible 24h durante todo el circuito
+            </p>
+          </div>
+        ) : (
+          <div className="text-center py-8 text-slate-400">
+            <p className="text-2xl mb-1">📍</p>
+            <p className="text-xs">
+              {!origenId ? 'Selecciona un origen para comenzar' : 'Agrega al menos 1 destino'}
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* Modal de reserva */}
       {showBookingModal && (
