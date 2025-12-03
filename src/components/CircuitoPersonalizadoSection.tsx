@@ -30,6 +30,7 @@ export default function CircuitoPersonalizadoSection() {
   const [precioTransporte, setPrecioTransporte] = useState(0)
   const [distanciaTotal, setDistanciaTotal] = useState(0)
   const [showBookingModal, setShowBookingModal] = useState(false)
+  const [showHelpModal, setShowHelpModal] = useState(false)
   const [busquedaCiudad, setBusquedaCiudad] = useState('')
   const [showCiudadDropdown, setShowCiudadDropdown] = useState(false)
   const [ciudadesFiltradas, setCiudadesFiltradas] = useState<Ubicacion[]>([])
@@ -255,6 +256,17 @@ export default function CircuitoPersonalizadoSection() {
   return (
     <>
       <div className="bg-white rounded-2xl shadow-xl p-6">
+        {/* Botón de ayuda en la esquina superior */}
+        <div className="flex justify-end mb-3">
+          <button
+            onClick={() => setShowHelpModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all"
+          >
+            <span className="text-base">ℹ️</span>
+            <span className="font-medium">Ayuda</span>
+          </button>
+        </div>
+
         {/* Personas y Tipo de Vehículo - Grid 2 columnas */}
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="relative">
@@ -798,6 +810,104 @@ export default function CircuitoPersonalizadoSection() {
                 {t('sendWhatsApp')}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de ayuda */}
+      {showHelpModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowHelpModal(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">🗺️</span>
+                  <div>
+                    <h3 className="text-xl font-bold">¿Cómo reservar tu circuito?</h3>
+                    <p className="text-blue-100 text-sm">Sigue estos simples pasos</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowHelpModal(false)}
+                  className="text-white hover:bg-white/20 rounded-lg p-2 transition-all"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {/* Paso 1 */}
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
+                  1
+                </div>
+                <div>
+                  <h4 className="font-semibold text-slate-800 mb-1">📍 Selecciona tu origen</h4>
+                  <p className="text-sm text-slate-600">Escoge desde dónde comienza tu viaje</p>
+                </div>
+              </div>
+
+              {/* Paso 2 */}
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
+                  2
+                </div>
+                <div>
+                  <h4 className="font-semibold text-slate-800 mb-1">🎯 Agrega destinos</h4>
+                  <p className="text-sm text-slate-600">Añade todos los lugares que quieras visitar en tu ruta</p>
+                </div>
+              </div>
+
+              {/* Paso 3 */}
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
+                  3
+                </div>
+                <div>
+                  <h4 className="font-semibold text-slate-800 mb-1">🏨 Añade alojamiento (opcional)</h4>
+                  <p className="text-sm text-slate-600">Indica habitaciones y noches en los destinos que necesites</p>
+                </div>
+              </div>
+
+              {/* Paso 4 */}
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
+                  4
+                </div>
+                <div>
+                  <h4 className="font-semibold text-slate-800 mb-1">💰 Revisa el presupuesto</h4>
+                  <p className="text-sm text-slate-600">Ve el precio calculado con transporte y alojamiento</p>
+                </div>
+              </div>
+
+              {/* Paso 5 */}
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center font-bold text-sm">
+                  5
+                </div>
+                <div>
+                  <h4 className="font-semibold text-slate-800 mb-1">📱 Solicita por WhatsApp</h4>
+                  <p className="text-sm text-slate-600">Envía tu circuito y coordina los detalles directamente</p>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-200">
+                <div className="bg-blue-50 rounded-lg p-3 flex items-start gap-2">
+                  <span className="text-lg flex-shrink-0">💡</span>
+                  <p className="text-xs text-blue-800">
+                    <strong>Consejo:</strong> Puedes reordenar destinos con los botones ↑ ↓ y eliminarlos con ✕
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowHelpModal(false)}
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all"
+              >
+                Entendido
+              </button>
+            </div>
           </div>
         </div>
       )}
