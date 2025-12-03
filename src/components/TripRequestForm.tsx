@@ -230,7 +230,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
           hora: horaLegible,
           pasajeros: cantidadPersonas,
           tipoTaxi: taxiType === 'colectivo' ? 'Taxi Colectivo' : 'Taxi Privado',
-          precioEstimado: price ? `$${price} CUP` : 'Por calcular',
+          precio: price || 0,
           distancia: distance ? `${distance} km` : 'Por calcular',
           tiempoEstimado: estimatedTime ? `${estimatedTime} minutos` : 'Por calcular'
         }

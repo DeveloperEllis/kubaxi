@@ -350,7 +350,7 @@ function ExcursionCard({ excursion }: { excursion: Excursion }) {
                   />
                 </div>
 
-                <div>
+                <div className="relative">
                   <input
                     type="number"
                     name="personas"
@@ -361,11 +361,14 @@ function ExcursionCard({ excursion }: { excursion: Excursion }) {
                       const value = parseInt(e.target.value)
                       setNumPersonas(value || 0)
                     }}
-                    placeholder={t('peopleCount')}
-                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900"
+                    placeholder=" "
+                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900 peer"
                     style={{ fontSize: '16px' }}
                     required
                   />
+                  <label className="absolute left-4 top-3 text-slate-500 transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:text-blue-600 peer-focus:bg-white peer-focus:px-1 peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-1 pointer-events-none">
+                    👥 {t('peopleCount')}
+                  </label>
                 </div>
               </div>
 

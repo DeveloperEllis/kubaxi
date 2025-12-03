@@ -60,9 +60,14 @@ export default function CircuitoPersonalizadoSection() {
   useEffect(() => {
     let resultado = ubicaciones;
 
-    // Si estamos buscando destinos (origenId existe), excluir el origen
+    // Si estamos buscando destinos (origenId existe), excluir el origen y destinos ya seleccionados
     if (origenId) {
       resultado = resultado.filter((u) => u.id !== origenId);
+      // También excluir destinos que ya están seleccionados
+      if (ciudadesSeleccionadas.length > 0) {
+        const destinosIds = ciudadesSeleccionadas.map((c) => c.ciudadId);
+        resultado = resultado.filter((u) => !destinosIds.includes(u.id));
+      }
     } else {
       // Si estamos buscando origen, excluir destinos ya seleccionados
       if (ciudadesSeleccionadas.length > 0) {
@@ -252,6 +257,16 @@ export default function CircuitoPersonalizadoSection() {
   };
 
   const calcularDiasTotales = (): number => {
+    // Si hay fechas seleccionadas, calcular días basado en la diferencia de fechas
+    if (fechaInicio && fechaFinal) {
+      const inicio = new Date(fechaInicio);
+      const fin = new Date(fechaFinal);
+      const diferenciaMilisegundos = fin.getTime() - inicio.getTime();
+      const diferenciaDias = Math.ceil(diferenciaMilisegundos / (1000 * 60 * 60 * 24));
+      return diferenciaDias + 1; // +1 para incluir el día de inicio
+    }
+    
+    // Fallback: calcular basado en noches de alojamiento
     const nochesTotales = ciudadesSeleccionadas.reduce((total, ciudad) => {
       return total + (ciudad.alojamiento?.noches || 0);
     }, 0);
@@ -288,10 +303,15 @@ export default function CircuitoPersonalizadoSection() {
     hoy.setHours(0, 0, 0, 0);
     const inicio = new Date(fechaInicio);
     const fin = new Date(fechaFinal);
+    
+    // Calcular fecha mínima (7 días desde hoy)
+    const fechaMinima = new Date();
+    fechaMinima.setHours(0, 0, 0, 0);
+    fechaMinima.setDate(fechaMinima.getDate() + 7);
 
-    // Validar que fecha de inicio sea mayor a hoy
-    if (inicio < hoy) {
-      setErrorValidacion("⚠️ La fecha de inicio debe ser mayor a hoy");
+    // Validar que fecha de inicio sea al menos 7 días después de hoy
+    if (inicio < fechaMinima) {
+      setErrorValidacion("⚠️ La fecha de inicio debe ser al menos 7 días después de hoy para gestionar el viaje");
       return false;
     }
 
@@ -331,6 +351,10 @@ export default function CircuitoPersonalizadoSection() {
       0
     );
     const diasCircuito = calcularDiasTotales();
+    
+    const destinoFinal = ciudadesSeleccionadas.length > 0
+      ? ubicaciones.find((u) => u.id === ciudadesSeleccionadas[ciudadesSeleccionadas.length - 1].ciudadId)?.nombre || 'N/A'
+      : 'N/A';
 
     abrirWhatsApp({
       tipo: "circuito_personalizado",
@@ -341,6 +365,8 @@ export default function CircuitoPersonalizadoSection() {
         fechaInicio: fechaInicio,
         fechaFinal: fechaFinal,
         horaRecogida: formData.get("hora"),
+        puntoRecogida: origenNombre,
+        destinoFinal: destinoFinal,
         ruta,
         personas: cantidadPersonas,
         tipoVehiculo:
@@ -445,6 +471,11 @@ export default function CircuitoPersonalizadoSection() {
               type="date"
               value={fechaInicio}
               onChange={(e) => setFechaInicio(e.target.value)}
+              min={(() => {
+                const date = new Date();
+                date.setDate(date.getDate() + 7);
+                return date.toISOString().split('T')[0];
+              })()}
               placeholder=""
               className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent peer text-sm"
               required
@@ -458,6 +489,11 @@ export default function CircuitoPersonalizadoSection() {
               type="date"
               value={fechaFinal}
               onChange={(e) => setFechaFinal(e.target.value)}
+              min={fechaInicio || (() => {
+                const date = new Date();
+                date.setDate(date.getDate() + 7);
+                return date.toISOString().split('T')[0];
+              })()}
               placeholder=""
               className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent peer text-sm"
               required
