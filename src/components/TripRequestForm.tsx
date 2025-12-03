@@ -62,6 +62,13 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
   useEffect(() => {
     let ubicacionesFiltradas = todasUbicaciones
     
+    // Excluir el destino seleccionado y ubicaciones de la misma provincia
+    if (selectedDestino) {
+      ubicacionesFiltradas = ubicacionesFiltradas.filter(
+        u => u.id !== selectedDestino.id && u.provincia !== selectedDestino.provincia
+      )
+    }
+    
     // Aplicar filtro de tipo solo si mostrarFiltros está activo
     if (mostrarFiltros) {
       if (filtroOrigenTipo === 'municipio turistico') {
@@ -90,11 +97,18 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
     }
     
     setOrigenSuggestions(ubicacionesFiltradas)
-  }, [todasUbicaciones, filtroOrigenTipo, origenSearch, mostrarFiltros])
+  }, [todasUbicaciones, filtroOrigenTipo, origenSearch, mostrarFiltros, selectedDestino])
 
   // Actualizar sugerencias de destino cuando cambia el filtro o la búsqueda
   useEffect(() => {
     let ubicacionesFiltradas = todasUbicaciones
+    
+    // Excluir el origen seleccionado y ubicaciones de la misma provincia
+    if (selectedOrigen) {
+      ubicacionesFiltradas = ubicacionesFiltradas.filter(
+        u => u.id !== selectedOrigen.id && u.provincia !== selectedOrigen.provincia
+      )
+    }
     
     // Aplicar filtro de tipo solo si mostrarFiltros está activo
     if (mostrarFiltros) {
@@ -124,7 +138,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
     }
     
     setDestinoSuggestions(ubicacionesFiltradas)
-  }, [todasUbicaciones, filtroDestinoTipo, destinoSearch, mostrarFiltros])
+  }, [todasUbicaciones, filtroDestinoTipo, destinoSearch, mostrarFiltros, selectedOrigen])
 
   // Detectar si origen o destino son de Oriente usando el campo region
   useEffect(() => {

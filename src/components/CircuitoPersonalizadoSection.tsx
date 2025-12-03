@@ -378,7 +378,7 @@ export default function CircuitoPersonalizadoSection() {
             }}
             onFocus={() => !origenId && setShowCiudadDropdown(true)}
             onBlur={() => setTimeout(() => setShowCiudadDropdown(false), 200)}
-            placeholder="📍 Origen del circuito..."
+            placeholder={`📍 ${t('originPlaceholder')}`}
             className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             readOnly={!!origenId}
           />
@@ -415,7 +415,7 @@ export default function CircuitoPersonalizadoSection() {
         {mostrarFiltros && origenId && (
           <div className="mb-4">
             <label className="block text-xs font-semibold text-slate-700 mb-2">
-              📍 Filtrar destinos
+              📍 {t('filterDestinations')}
             </label>
             <div className="flex gap-2 flex-wrap">
               <button
@@ -479,7 +479,7 @@ export default function CircuitoPersonalizadoSection() {
             }}
             onFocus={() => origenId && setShowCiudadDropdown(true)}
             onBlur={() => setTimeout(() => setShowCiudadDropdown(false), 200)}
-            placeholder={origenId ? "📍 Agregar destinos..." : "⚠️ Primero selecciona un origen"}
+            placeholder={origenId ? `📍 ${t('destinationsPlaceholder')}` : `⚠️ ${t('selectOriginFirst')}`}
             disabled={!origenId}
             className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
           />
@@ -507,7 +507,7 @@ export default function CircuitoPersonalizadoSection() {
         {/* Ruta seleccionada - compacta */}
         {(origenId || ciudadesSeleccionadas.length > 0) && (
           <div className="mb-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
-            <div className="text-xs font-semibold text-slate-600 mb-2">Tu ruta:</div>
+            <div className="text-xs font-semibold text-slate-600 mb-2">{t('yourRoute')}</div>
             
             {/* Origen */}
             {origenId && (
@@ -517,7 +517,7 @@ export default function CircuitoPersonalizadoSection() {
                   <span className="text-sm font-semibold text-green-800">
                     {ubicaciones.find(u => u.id === origenId)?.nombre}
                   </span>
-                  <span className="text-xs text-green-600 ml-auto">Origen</span>
+                  <span className="text-xs text-green-600 ml-auto">{t('origin')}</span>
                 </div>
               </div>
             )}
@@ -545,9 +545,9 @@ export default function CircuitoPersonalizadoSection() {
                           <button
                             onClick={() => toggleAlojamiento(index)}
                             className="px-2 py-0.5 text-xs rounded bg-slate-100 text-slate-700 hover:bg-slate-200"
-                            title="Agregar alojamiento"
+                            title={t('accommodation')}
                           >
-                            Alojarme
+                            {t('accommodation')}
                           </button>
                         )}
                         {index > 0 && (
@@ -580,7 +580,7 @@ export default function CircuitoPersonalizadoSection() {
                       <div className="mt-2 pt-2 border-t border-slate-100">
                         <div className="flex gap-2 items-end">
                           <div className="flex-1">
-                            <label className="block text-[10px] text-slate-600 mb-0.5">Habitaciones</label>
+                            <label className="block text-[10px] text-slate-600 mb-0.5">{t('rooms')}</label>
                             <input
                               type="number"
                               min="1"
@@ -599,7 +599,7 @@ export default function CircuitoPersonalizadoSection() {
                             />
                           </div>
                           <div className="flex-1">
-                            <label className="block text-[10px] text-slate-600 mb-0.5">Noches</label>
+                            <label className="block text-[10px] text-slate-600 mb-0.5">{t('nights')}</label>
                             <input
                               type="number"
                               min="1"
@@ -639,22 +639,22 @@ export default function CircuitoPersonalizadoSection() {
           <div className="space-y-2">
             <div className="p-2.5 bg-slate-50 rounded-lg text-xs">
               <div className="flex justify-between mb-1">
-                <span className="text-slate-600">Distancia:</span>
+                <span className="text-slate-600">{t('distance')}:</span>
                 <span className="font-semibold">{calculando ? '...' : `${distanciaTotal} km`}</span>
               </div>
               <div className="flex justify-between mb-1">
-                <span className="text-slate-600">Días:</span>
+                <span className="text-slate-600">{t('days')}:</span>
                 <span className="font-semibold">{calcularDiasTotales()}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-600">Personas:</span>
+                <span className="text-slate-600">{t('passengers')}:</span>
                 <span className="font-semibold">{cantidadPersonas}</span>
               </div>
             </div>
 
             <div className="space-y-1.5">
               <div className="flex justify-between p-2 bg-blue-50 rounded-lg text-xs">
-                <span className="text-blue-800">🚕 Transporte</span>
+                <span className="text-blue-800">🚕 {t('transport')}</span>
                 <span className="font-bold text-blue-900">
                   ${calculando ? '...' : precioTransporte * calcularDiasTotales()}
                 </span>
@@ -662,13 +662,13 @@ export default function CircuitoPersonalizadoSection() {
 
               {calcularPrecioAlojamiento() > 0 && (
                 <div className="flex justify-between p-2 bg-indigo-50 rounded-lg text-xs">
-                  <span className="text-indigo-800">🏨 Alojamiento</span>
+                  <span className="text-indigo-800">🏨 {t('accommodation')}</span>
                   <span className="font-bold text-indigo-900">${calcularPrecioAlojamiento()}</span>
                 </div>
               )}
 
               <div className="flex justify-between p-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg">
-                <span className="font-semibold text-sm">💰 Total</span>
+                <span className="font-semibold text-sm">💰 {t('total')}</span>
                 <span className="text-lg font-bold">
                   ${calculando ? '...' : calcularPrecioTotal()}
                 </span>
@@ -680,18 +680,18 @@ export default function CircuitoPersonalizadoSection() {
               disabled={calculando}
               className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg font-bold text-sm hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {calculando ? 'Calculando...' : 'Solicitar circuito'}
+              {calculando ? t('calculating') : t('requestCircuit')}
             </button>
 
             <p className="text-xs text-center text-slate-500">
-              Taxi disponible 24h durante todo el circuito
+              {t('taxiAvailable')}
             </p>
           </div>
         ) : (
           <div className="text-center py-8 text-slate-400">
             <p className="text-2xl mb-1">📍</p>
             <p className="text-xs">
-              {!origenId ? 'Selecciona un origen para comenzar' : 'Agrega al menos 1 destino'}
+              {!origenId ? t('selectOriginToStart') : t('addAtLeastOneDestination')}
             </p>
           </div>
         )}
@@ -704,8 +704,8 @@ export default function CircuitoPersonalizadoSection() {
             <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-2xl">
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="text-2xl font-bold mb-1">Circuito Personalizado</h3>
-                  <p className="text-blue-100 text-sm">Completa tus datos</p>
+                  <h3 className="text-2xl font-bold mb-1">{t('bookingTitle')}</h3>
+                  <p className="text-blue-100 text-sm">{t('completeData')}</p>
                 </div>
                 <button
                   onClick={() => setShowBookingModal(false)}
@@ -718,33 +718,33 @@ export default function CircuitoPersonalizadoSection() {
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Nombre</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">{t('name')}</label>
                 <input
                   type="text"
                   name="nombre"
-                  placeholder="Tu nombre"
+                  placeholder={t('namePlaceholder')}
                   className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">{t('email')}</label>
                 <input
                   type="email"
                   name="email"
-                  placeholder="tu@email.com"
+                  placeholder={t('emailPlaceholder')}
                   className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Teléfono</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">{t('phone')}</label>
                 <input
                   type="tel"
                   name="telefono"
-                  placeholder="+53 5123 4567"
+                  placeholder={t('phonePlaceholder')}
                   className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
@@ -752,7 +752,7 @@ export default function CircuitoPersonalizadoSection() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Fecha </label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">{t('stsartDate')}</label>
                   <input
                     type="date"
                     name="fecha"
@@ -761,7 +761,7 @@ export default function CircuitoPersonalizadoSection() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Hora de recogida</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">{t('pickupTime')}</label>
                   <input
                     type="time"
                     name="hora"
@@ -772,11 +772,11 @@ export default function CircuitoPersonalizadoSection() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Comentarios</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">{t('comments')}</label>
                 <textarea
                   name="comentarios"
                   rows={3}
-                  placeholder="Preferencias especiales..."
+                  placeholder={t('commentsPlaceholder')}
                   className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 />
               </div>
@@ -795,7 +795,7 @@ export default function CircuitoPersonalizadoSection() {
                 className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-bold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
               >
                 <span>📱</span>
-                Enviar por WhatsApp
+                {t('sendWhatsApp')}
               </button>
             </form>
           </div>
