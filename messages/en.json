@@ -146,6 +146,7 @@
     "phone": "Phone",
     "phonePlaceholder": "+53 5123 4567",
     "startDate": "Start date",
+    "endDate": "End date",
     "pickupTime": "Pickup time",
     "comments": "Comments",
     "commentsPlaceholder": "Special preferences...",

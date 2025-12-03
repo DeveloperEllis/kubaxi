@@ -146,6 +146,7 @@
     "phone": "Téléphone",
     "phonePlaceholder": "+53 5123 4567",
     "startDate": "Date de début",
+    "endDate": "Date de fin",
     "pickupTime": "Heure de ramassage",
     "comments": "Commentaires",
     "commentsPlaceholder": "Préférences spéciales...",
