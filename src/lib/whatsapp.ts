@@ -132,7 +132,6 @@ ${datos.ruta || 'N/A'}
 ¿Necesita alojamiento?: ${datos.alojamiento}
 ${datos.alojamiento === 'Sí' ? `🛏️ Detalle: ${datos.detalleAlojamiento}` : ''}
 
-💰 *Precios:*
 🚕 Transporte (24hrs): $${datos.precioTransporte}
 🏨 Alojamiento: $${datos.precioAlojamiento}
 💵 *TOTAL: $${datos.precioTotal}*

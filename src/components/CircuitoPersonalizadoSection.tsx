@@ -47,6 +47,13 @@ export default function CircuitoPersonalizadoSection() {
   useEffect(() => {
     cargarUbicaciones();
   }, []);
+  
+  // Forzar selección de van cuando hay más de 4 personas
+  useEffect(() => {
+    if (cantidadPersonas > 4 && tipoVehiculo !== 'van') {
+      setTipoVehiculo('van');
+    }
+  }, [cantidadPersonas, tipoVehiculo]);
 
   useEffect(() => {
     aplicarFiltro();
@@ -283,19 +290,19 @@ export default function CircuitoPersonalizadoSection() {
 
     // Validar tipo de vehículo
     if (!tipoVehiculo) {
-      setErrorValidacion("⚠️ Debes seleccionar un tipo de vehículo");
+      setErrorValidacion(`⚠️ ${t('errorVehicleType')}`);
       return false;
     }
 
     // Validar fecha de inicio
     if (!fechaInicio) {
-      setErrorValidacion("⚠️ Debes seleccionar una fecha de inicio");
+      setErrorValidacion(`⚠️ ${t('errorStartDate')}`);
       return false;
     }
 
     // Validar fecha de fin
     if (!fechaFinal) {
-      setErrorValidacion("⚠️ Debes seleccionar una fecha de fin");
+      setErrorValidacion(`⚠️ ${t('errorEndDate')}`);
       return false;
     }
 
@@ -307,17 +314,17 @@ export default function CircuitoPersonalizadoSection() {
     // Calcular fecha mínima (7 días desde hoy)
     const fechaMinima = new Date();
     fechaMinima.setHours(0, 0, 0, 0);
-    fechaMinima.setDate(fechaMinima.getDate() + 7);
+    fechaMinima.setDate(fechaMinima.getDate() + 6);
 
-    // Validar que fecha de inicio sea al menos 7 días después de hoy
+    // Validar que fecha de inicio sea al menos 7 días después de hoy (usar <= para incluir el séptimo día)
     if (inicio < fechaMinima) {
-      setErrorValidacion("⚠️ La fecha de inicio debe ser al menos 7 días después de hoy para gestionar el viaje");
+      setErrorValidacion(`⚠️ ${t('errorStartDateMinimum')}`);
       return false;
     }
 
     // Validar que fecha de fin no sea menor que fecha de inicio
     if (fin <= inicio) {
-      setErrorValidacion("⚠️ La fecha de fin no puede ser menor o igual que la fecha de inicio");
+      setErrorValidacion(`⚠️ ${t('errorEndDateBeforeStart')}`);
       return false;
     }
 
@@ -379,14 +386,11 @@ export default function CircuitoPersonalizadoSection() {
             : "No especificado",
         dias: diasCircuito,
         distancia: distanciaTotal,
-        precioTransporte: precioTransporte * diasCircuito,
         alojamiento: totalNoches > 0 ? "Sí" : "No",
         detalleAlojamiento:
           totalNoches > 0
             ? `${totalNoches} ${totalNoches === 1 ? "noche" : "noches"}`
             : "No requiere",
-        precioAlojamiento: calcularPrecioAlojamiento(),
-        precioTotal: calcularPrecioTotal(),
         comentarios: formData.get("comentarios") || "Sin comentarios",
       },
     });
@@ -412,7 +416,7 @@ export default function CircuitoPersonalizadoSection() {
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all"
           >
             <span className="text-base">ℹ️</span>
-            <span className="font-medium">Ayuda</span>
+            <span className="font-medium">{t("help")}</span>
           </button>
         </div>
 
@@ -457,10 +461,15 @@ export default function CircuitoPersonalizadoSection() {
               <option value="" disabled>
                 🚗 {t("vehicleType")}
               </option>
-              <option value="clasico">🚗 {t("classic")}</option>
-              <option value="moderno">🚙 {t("modern")}</option>
+              <option value="clasico" disabled={cantidadPersonas > 4}>🚗 {t("classic")}</option>
+              <option value="moderno" disabled={cantidadPersonas > 4}>🚙 {t("modern")}</option>
               <option value="van">🚐 {t("van")}</option>
             </select>
+            {cantidadPersonas > 4 && (
+              <p className="text-xs text-amber-600 mt-1">
+                ⚠️ {t("vanRequired")}
+              </p>
+            )}
           </div>
         </div>
 
@@ -880,7 +889,7 @@ export default function CircuitoPersonalizadoSection() {
                           <button
                             onClick={() => toggleAlojamiento(index)}
                             className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
-                            title="Quitar alojamiento"
+                            title={t("removeAccommodation")}
                           >
                             ✕
                           </button>
@@ -897,50 +906,35 @@ export default function CircuitoPersonalizadoSection() {
         {/* Resumen compacto */}
         {origenId && ciudadesSeleccionadas.length >= 1 ? (
           <div className="space-y-2">
-            <div className="p-2.5 bg-slate-50 rounded-lg text-xs">
-              <div className="flex justify-between mb-1">
-                <span className="text-slate-600">{t("distance")}:</span>
-                <span className="font-semibold">
-                  {calculando ? "..." : `${distanciaTotal} km`}
-                </span>
-              </div>
-              <div className="flex justify-between mb-1">
-                <span className="text-slate-600">{t("days")}:</span>
-                <span className="font-semibold">{calcularDiasTotales()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-600">{t("passengers")}:</span>
-                <span className="font-semibold">{cantidadPersonas}</span>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex justify-between p-2 bg-blue-50 rounded-lg text-xs">
-                <span className="text-blue-800">🚕 {t("transport")}</span>
-                <span className="font-bold text-blue-900">
-                  $
-                  {calculando
-                    ? "..."
-                    : precioTransporte * calcularDiasTotales()}
-                </span>
-              </div>
-
-              {calcularPrecioAlojamiento() > 0 && (
-                <div className="flex justify-between p-2 bg-indigo-50 rounded-lg text-xs">
-                  <span className="text-indigo-800">
-                    🏨 {t("accommodation")}
-                  </span>
-                  <span className="font-bold text-indigo-900">
-                    ${calcularPrecioAlojamiento()}
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+              <div className="space-y-2.5">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-700 font-medium text-sm">📍 {t("distance")}:</span>
+                  <span className="font-bold text-blue-600">
+                    {calculando ? "..." : `${distanciaTotal} km`}
                   </span>
                 </div>
-              )}
-
-              <div className="flex justify-between p-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg">
-                <span className="font-semibold text-sm">💰 {t("total")}</span>
-                <span className="text-lg font-bold">
-                  ${calculando ? "..." : calcularPrecioTotal()}
-                </span>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-700 font-medium text-sm">📅 {t("days")}:</span>
+                  <span className="font-bold text-blue-600">{calcularDiasTotales()}</span>
+                </div>
+                {ciudadesSeleccionadas.some(c => c.alojamiento) && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-700 font-medium text-sm">🌙 {t("accommodationNights")}:</span>
+                    <span className="font-bold text-blue-600">
+                      {ciudadesSeleccionadas.reduce((total, c) => total + (c.alojamiento?.noches || 0), 0)}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-700 font-medium text-sm">👥 {t("passengers")}:</span>
+                  <span className="font-bold text-blue-600">{cantidadPersonas}</span>
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-blue-200">
+                <p className="text-xs text-center text-slate-600">
+                  💬 <strong>{t("priceNegotiable")}</strong>
+                </p>
               </div>
             </div>
 
@@ -958,7 +952,7 @@ export default function CircuitoPersonalizadoSection() {
 
             {ciudadesSeleccionadas.length < 2 && (
               <p className="text-xs text-center text-amber-600 font-medium">
-                ⚠️ Debes agregar al menos 2 destinos (3 ubicaciones en total)
+                ⚠️ {t("minimumDestinations")}
               </p>
             )}
 
@@ -978,7 +972,7 @@ export default function CircuitoPersonalizadoSection() {
             <p className="text-xs">
               {!origenId
                 ? t("selectOriginToStart")
-                : "Agrega al menos 2 destinos"}
+                : t("addAtLeastTwoDestinations")}
             </p>
           </div>
         )}
@@ -1076,13 +1070,10 @@ export default function CircuitoPersonalizadoSection() {
               </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <p className="text-sm text-blue-800 font-medium mb-2">
-                  💰 Total:{" "}
-                  <span className="text-lg font-bold">
-                    ${calcularPrecioTotal()}
-                  </span>
+                <p className="text-sm text-blue-800 font-medium text-center">
+                  💬 {t("priceNegotiable")}
                 </p>
-                <p className="text-xs text-blue-700">
+                <p className="text-xs text-blue-700 text-center mt-2">
                   {calcularDiasTotales()} días •{" "}
                   {ciudadesSeleccionadas.reduce(
                     (t, c) => t + (c.alojamiento?.noches || 0),
@@ -1120,10 +1111,10 @@ export default function CircuitoPersonalizadoSection() {
                   <span className="text-3xl">🗺️</span>
                   <div>
                     <h3 className="text-xl font-bold">
-                      ¿Cómo reservar tu circuito?
+                      {t("helpTitle")}
                     </h3>
                     <p className="text-blue-100 text-sm">
-                      Sigue estos simples pasos
+                      {t("helpSubtitle")}
                     </p>
                   </div>
                 </div>
@@ -1144,10 +1135,10 @@ export default function CircuitoPersonalizadoSection() {
                 </div>
                 <div>
                   <h4 className="font-semibold text-slate-800 mb-1">
-                    📍 Selecciona tu origen
+                    📍 {t("helpStep1Title")}
                   </h4>
                   <p className="text-sm text-slate-600">
-                    Escoge desde dónde comienza tu viaje
+                    {t("helpStep1Desc")}
                   </p>
                 </div>
               </div>
@@ -1159,10 +1150,10 @@ export default function CircuitoPersonalizadoSection() {
                 </div>
                 <div>
                   <h4 className="font-semibold text-slate-800 mb-1">
-                    🎯 Agrega destinos
+                    🎯 {t("helpStep2Title")}
                   </h4>
                   <p className="text-sm text-slate-600">
-                    Añade todos los lugares que quieras visitar en tu ruta
+                    {t("helpStep2Desc")}
                   </p>
                 </div>
               </div>
@@ -1174,10 +1165,10 @@ export default function CircuitoPersonalizadoSection() {
                 </div>
                 <div>
                   <h4 className="font-semibold text-slate-800 mb-1">
-                    🏨 Añade alojamiento (opcional)
+                    🏨 {t("helpStep3Title")}
                   </h4>
                   <p className="text-sm text-slate-600">
-                    Indica habitaciones y noches en los destinos que necesites
+                    {t("helpStep3Desc")}
                   </p>
                 </div>
               </div>
@@ -1189,10 +1180,10 @@ export default function CircuitoPersonalizadoSection() {
                 </div>
                 <div>
                   <h4 className="font-semibold text-slate-800 mb-1">
-                    💰 Revisa el presupuesto
+                    💰 {t("helpStep4Title")}
                   </h4>
                   <p className="text-sm text-slate-600">
-                    Ve el precio calculado con transporte y alojamiento
+                    {t("helpStep4Desc")}
                   </p>
                 </div>
               </div>
@@ -1204,10 +1195,10 @@ export default function CircuitoPersonalizadoSection() {
                 </div>
                 <div>
                   <h4 className="font-semibold text-slate-800 mb-1">
-                    📱 Solicita por WhatsApp
+                    📱 {t("helpStep5Title")}
                   </h4>
                   <p className="text-sm text-slate-600">
-                    Envía tu circuito y coordina los detalles directamente
+                    {t("helpStep5Desc")}
                   </p>
                 </div>
               </div>
@@ -1216,8 +1207,7 @@ export default function CircuitoPersonalizadoSection() {
                 <div className="bg-blue-50 rounded-lg p-3 flex items-start gap-2">
                   <span className="text-lg flex-shrink-0">💡</span>
                   <p className="text-xs text-blue-800">
-                    <strong>Consejo:</strong> Puedes reordenar destinos con los
-                    botones ↑ ↓ y eliminarlos con ✕
+                    <strong>{t("helpTip")}</strong>
                   </p>
                 </div>
               </div>
@@ -1226,7 +1216,7 @@ export default function CircuitoPersonalizadoSection() {
                 onClick={() => setShowHelpModal(false)}
                 className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all"
               >
-                Entendido
+                {t("understood")}
               </button>
             </div>
           </div>
