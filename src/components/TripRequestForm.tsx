@@ -33,7 +33,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
   const [cantidadPersonas, setCantidadPersonas] = useState(0)
   const [tripDate, setTripDate] = useState('')
   const [tripTime, setTripTime] = useState('')
-  const [horarioColectivo, setHorarioColectivo] = useState<'mañana' | 'tarde' | null>(null)
+  const [horarioColectivo, setHorarioColectivo] = useState<'mañana' | 'tarde' | undefined>(undefined)
   const [isOrienteRoute, setIsOrienteRoute] = useState(false)
   
   // ✅ Custom hook para cálculos de precio
@@ -148,7 +148,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
     
     if (esOriente && taxiType === 'colectivo') {
       setTaxiType('privado')
-      setHorarioColectivo(null)
+      setHorarioColectivo(undefined)
     }
   }, [selectedOrigen, selectedDestino, taxiType])
 
@@ -169,8 +169,8 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
     
     // ✅ Validar con Zod
     const isValid = validate({
-      origen: selectedOrigen ? { id: selectedOrigen.id, nombre: selectedOrigen.nombre } : undefined as any,
-      destino: selectedDestino ? { id: selectedDestino.id, nombre: selectedDestino.nombre } : undefined as any,
+      origen: selectedOrigen || undefined,
+      destino: selectedDestino || undefined,
       taxiType,
       cantidadPersonas,
       tripDate,
@@ -199,6 +199,12 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
       }
 
       // Abrir WhatsApp con la información de la reserva
+      if (!selectedOrigen || !selectedDestino) {
+        setError('Debes seleccionar origen y destino');
+        setLoading(false);
+        return;
+      }
+      
       abrirWhatsApp({
         tipo: 'reserva_taxi',
         datos: {
@@ -478,7 +484,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                 const newType = e.target.value as 'colectivo' | 'privado'
                 setTaxiType(newType)
                 setTripTime('')
-                setHorarioColectivo(null)
+                setHorarioColectivo(undefined)
               }}
               disabled={isOrienteRoute}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"

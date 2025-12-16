@@ -7,20 +7,14 @@ export const tripRequestSchema = z.object({
   origen: z.object({
     id: z.number().positive('ID de origen requerido'),
     nombre: z.string().min(1, 'Nombre de origen requerido'),
-  }, {
-    required_error: 'Debes seleccionar un origen',
-  }),
+  }).optional(),
   
   destino: z.object({
     id: z.number().positive('ID de destino requerido'),
     nombre: z.string().min(1, 'Nombre de destino requerido'),
-  }, {
-    required_error: 'Debes seleccionar un destino',
-  }),
+  }).optional(),
   
-  taxiType: z.enum(['colectivo', 'privado'], {
-    required_error: 'Tipo de taxi requerido',
-  }),
+  taxiType: z.enum(['colectivo', 'privado']),
   
   cantidadPersonas: z.number()
     .int('Cantidad debe ser número entero')
@@ -43,6 +37,18 @@ export const tripRequestSchema = z.object({
   
   horarioColectivo: z.enum(['mañana', 'tarde']).optional(),
 }).refine(
+  (data) => {
+    // Validar que origen y destino existan
+    if (!data.origen || !data.destino) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: 'Debes seleccionar origen y destino',
+    path: ['origen'],
+  }
+).refine(
   (data) => {
     // Si es colectivo, horarioColectivo es requerido
     if (data.taxiType === 'colectivo') {
@@ -69,7 +75,10 @@ export const tripRequestSchema = z.object({
 ).refine(
   (data) => {
     // Origen y destino no pueden ser iguales
-    return data.origen.id !== data.destino.id;
+    if (data.origen && data.destino) {
+      return data.origen.id !== data.destino.id;
+    }
+    return true;
   },
   {
     message: 'El origen y destino no pueden ser iguales',
@@ -109,9 +118,7 @@ export const circuitoPersonalizadoSchema = z.object({
   origen: z.object({
     id: z.number().positive('ID de origen requerido'),
     nombre: z.string().min(1, 'Nombre de origen requerido'),
-  }, {
-    required_error: 'Debes seleccionar un origen',
-  }),
+  }).optional(),
   
   ciudadesSeleccionadas: z.array(ciudadCircuitoSchema)
     .min(1, 'Debes seleccionar al menos 1 ciudad de destino')
@@ -122,9 +129,7 @@ export const circuitoPersonalizadoSchema = z.object({
     .min(1, 'Debe haber al menos 1 persona')
     .max(8, 'Máximo 8 personas permitidas'),
   
-  tipoVehiculo: z.enum(['clasico', 'moderno', 'van'], {
-    required_error: 'Debes seleccionar un tipo de vehículo',
-  }),
+  tipoVehiculo: z.enum(['clasico', 'moderno', 'van']),
   
   fechaInicio: z.string()
     .min(1, 'Fecha de inicio requerida')
@@ -168,9 +173,7 @@ export type CircuitoPersonalizadoFormData = z.infer<typeof circuitoPersonalizado
  * Schema de validación para formulario de otros servicios
  */
 export const otrosServiciosSchema = z.object({
-  servicio: z.enum(['alojamiento', 'guia', 'clases_baile', 'excursion_caballo'], {
-    required_error: 'Debes seleccionar un servicio',
-  }),
+  servicio: z.enum(['alojamiento', 'guia', 'clases_baile', 'excursion_caballo']),
   
   cantidadPersonas: z.number()
     .int('Cantidad debe ser número entero')

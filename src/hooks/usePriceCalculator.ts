@@ -70,7 +70,7 @@ export function usePriceCalculator(): PriceCalculatorResult {
       // Actualizar estado con resultados
       setPrice(Math.round(resultado.price));
       setDistance(Math.round(resultado.distance_km * 10) / 10); // 1 decimal
-      setEstimatedTime(Math.round(resultado.estimated_hours * 10) / 10); // 1 decimal
+      setEstimatedTime(Math.round((resultado.estimated_time_minutes / 60) * 10) / 10); // Convertir minutos a horas con 1 decimal
     } catch (err) {
       const mensaje = err instanceof Error ? err.message : 'Error al calcular el precio';
       setError(mensaje);
