@@ -28,6 +28,9 @@ export function abrirWhatsApp(mensaje: WhatsAppMessage) {
     case 'circuito_personalizado':
       textoMensaje = formatearCircuitoPersonalizado(mensaje.datos);
       break;
+    case 'otros_servicios':
+      textoMensaje = formatearOtrosServicios(mensaje.datos);
+      break;
     default:
       textoMensaje = JSON.stringify(mensaje.datos, null, 2);
   }
@@ -140,4 +143,14 @@ ${datos.alojamiento === 'Sí' ? `🛏️ Detalle: ${datos.detalleAlojamiento}` :
 ${datos.comentarios || 'Sin comentarios'}
 
 ℹ️ _Incluye taxi disponible las 24 horas durante todo el circuito_`;
+}
+
+function formatearOtrosServicios(datos: any): string {
+  return `✨ *CONSULTA DE SERVICIO - ${APP_NAME.toUpperCase()}*
+
+🎯 *Servicio Solicitado:*
+${datos.servicio || 'N/A'}
+
+💬 *Mensaje:*
+${datos.mensaje || 'Sin mensaje'}`;
 }

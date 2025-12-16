@@ -237,15 +237,8 @@ function ExcursionCard({ excursion }: { excursion: Excursion }) {
         </h3>
 
         {descripcion && (
-          <p className="text-slate-600 text-sm mb-4 line-clamp-3 leading-relaxed">
-            {descripcion}
-          </p>
-        )}
-
-        {descripcion && showDetails && (
-          <div className="bg-blue-50 p-4 rounded-xl mb-4 border border-blue-100">
-            <h4 className="font-semibold text-slate-800 mb-2">{t('fullDescription')}</h4>
-            <p className="text-sm text-slate-600 whitespace-pre-line leading-relaxed">
+          <div className={`overflow-hidden transition-all duration-500 ease-in-out mb-4 ${showDetails ? 'max-h-[1000px]' : 'max-h-[72px]'}`}>
+            <p className={`text-slate-600 text-sm leading-relaxed whitespace-pre-line transition-all duration-300 ${!showDetails ? 'line-clamp-3' : ''}`}>
               {descripcion}
             </p>
           </div>
