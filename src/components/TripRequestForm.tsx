@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import { calculatePrice } from '@/lib/services'
 import { abrirWhatsApp } from '@/lib/whatsapp'
-import { supabase } from '@/lib/supabase'
+import { useData } from '@/contexts/DataContext'
+import { useDebounce } from '@/hooks/useDebounce'
 import { Ubicacion } from '@/types'
 
 interface TripRequestFormProps {
@@ -13,13 +14,11 @@ interface TripRequestFormProps {
 
 export default function TripRequestForm({ onBack }: TripRequestFormProps) {
   const t = useTranslations('tripForm')
+  const { ubicaciones: todasUbicaciones, loading: loadingUbicaciones } = useData(); // ✅ Context API
   
   // Form state
-  const [todasUbicaciones, setTodasUbicaciones] = useState<Ubicacion[]>([])
   const [origenSearch, setOrigenSearch] = useState('')
   const [destinoSearch, setDestinoSearch] = useState('')
-  const [origenSuggestions, setOrigenSuggestions] = useState<Ubicacion[]>([])
-  const [destinoSuggestions, setDestinoSuggestions] = useState<Ubicacion[]>([])
   const [showOrigenDropdown, setShowOrigenDropdown] = useState(false)
   const [showDestinoDropdown, setShowDestinoDropdown] = useState(false)
   const [selectedOrigen, setSelectedOrigen] = useState<Ubicacion | null>(null)
@@ -42,31 +41,19 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Cargar todas las ubicaciones al inicio
-  useEffect(() => {
-    const cargarUbicaciones = async () => {
-      const { data } = await supabase
-        .from('ubicaciones_cuba')
-        .select('*')
-        .order('nombre', { ascending: true })
-      
-      if (data) {
-        setTodasUbicaciones(data)
-      }
-    }
-    
-    cargarUbicaciones()
-  }, [])
+  // ✅ Debounce para búsquedas
+  const debouncedOrigenSearch = useDebounce(origenSearch, 300);
+  const debouncedDestinoSearch = useDebounce(destinoSearch, 300);
 
-  // Actualizar sugerencias de origen cuando cambia el filtro o la búsqueda
-  useEffect(() => {
-    let ubicacionesFiltradas = todasUbicaciones
+  // ✅ useMemo: Optimizar sugerencias de origen
+  const origenSuggestions = useMemo(() => {
+    let ubicacionesFiltradas = todasUbicaciones;
     
     // Excluir el destino seleccionado y ubicaciones de la misma provincia
     if (selectedDestino) {
       ubicacionesFiltradas = ubicacionesFiltradas.filter(
         u => u.id !== selectedDestino.id && u.provincia !== selectedDestino.provincia
-      )
+      );
     }
     
     // Aplicar filtro de tipo solo si mostrarFiltros está activo
@@ -74,40 +61,39 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
       if (filtroOrigenTipo === 'municipio turistico') {
         ubicacionesFiltradas = ubicacionesFiltradas.filter(
           u => u.tipo?.toLowerCase() === 'municipio turistico'
-        )
+        );
       } else if (filtroOrigenTipo === 'cayo') {
         ubicacionesFiltradas = ubicacionesFiltradas.filter(
           u => u.tipo?.toLowerCase() === 'cayo'
-        )
+        );
       } else if (filtroOrigenTipo === 'aeropuerto') {
         ubicacionesFiltradas = ubicacionesFiltradas.filter(
           u => u.tipo?.toLowerCase() === 'aeropuerto'
-        )
+        );
       }
-      // Si es 'todos', no se filtra
     }
     
-    // Aplicar búsqueda
-    if (origenSearch.trim()) {
-      const searchLower = origenSearch.toLowerCase()
+    // Usar debouncedOrigenSearch
+    if (debouncedOrigenSearch.trim()) {
+      const searchLower = debouncedOrigenSearch.toLowerCase();
       ubicacionesFiltradas = ubicacionesFiltradas.filter(u =>
         u.nombre.toLowerCase().includes(searchLower) ||
         u.provincia?.toLowerCase().includes(searchLower)
-      )
+      );
     }
     
-    setOrigenSuggestions(ubicacionesFiltradas)
-  }, [todasUbicaciones, filtroOrigenTipo, origenSearch, mostrarFiltros, selectedDestino])
+    return ubicacionesFiltradas;
+  }, [todasUbicaciones, filtroOrigenTipo, debouncedOrigenSearch, mostrarFiltros, selectedDestino]);
 
-  // Actualizar sugerencias de destino cuando cambia el filtro o la búsqueda
-  useEffect(() => {
-    let ubicacionesFiltradas = todasUbicaciones
+  // ✅ useMemo: Optimizar sugerencias de destino
+  const destinoSuggestions = useMemo(() => {
+    let ubicacionesFiltradas = todasUbicaciones;
     
     // Excluir el origen seleccionado y ubicaciones de la misma provincia
     if (selectedOrigen) {
       ubicacionesFiltradas = ubicacionesFiltradas.filter(
         u => u.id !== selectedOrigen.id && u.provincia !== selectedOrigen.provincia
-      )
+      );
     }
     
     // Aplicar filtro de tipo solo si mostrarFiltros está activo
@@ -115,30 +101,29 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
       if (filtroDestinoTipo === 'municipio turistico') {
         ubicacionesFiltradas = ubicacionesFiltradas.filter(
           u => u.tipo?.toLowerCase() === 'municipio turistico'
-        )
+        );
       } else if (filtroDestinoTipo === 'cayo') {
         ubicacionesFiltradas = ubicacionesFiltradas.filter(
           u => u.tipo?.toLowerCase() === 'cayo'
-        )
+        );
       } else if (filtroDestinoTipo === 'aeropuerto') {
         ubicacionesFiltradas = ubicacionesFiltradas.filter(
           u => u.tipo?.toLowerCase() === 'aeropuerto'
-        )
+        );
       }
-      // Si es 'todos', no se filtra
     }
     
-    // Aplicar búsqueda
-    if (destinoSearch.trim()) {
-      const searchLower = destinoSearch.toLowerCase()
+    // Usar debouncedDestinoSearch
+    if (debouncedDestinoSearch.trim()) {
+      const searchLower = debouncedDestinoSearch.toLowerCase();
       ubicacionesFiltradas = ubicacionesFiltradas.filter(u =>
         u.nombre.toLowerCase().includes(searchLower) ||
         u.provincia?.toLowerCase().includes(searchLower)
-      )
+      );
     }
     
-    setDestinoSuggestions(ubicacionesFiltradas)
-  }, [todasUbicaciones, filtroDestinoTipo, destinoSearch, mostrarFiltros, selectedOrigen])
+    return ubicacionesFiltradas;
+  }, [todasUbicaciones, filtroDestinoTipo, debouncedDestinoSearch, mostrarFiltros, selectedOrigen]);
 
   // Detectar si origen o destino son de Oriente usando el campo region
   useEffect(() => {

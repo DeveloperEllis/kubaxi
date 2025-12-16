@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, FormEvent, useMemo, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { getUbicaciones, calculatePrice } from "@/lib/services";
+import { calculatePrice } from "@/lib/services";
 import { abrirWhatsApp } from "@/lib/whatsapp";
+import { useData } from "@/contexts/DataContext";
+import { useDebounce } from "@/hooks/useDebounce";
 import type { Ubicacion } from "@/types";
 
 interface CiudadCircuito {
@@ -16,10 +18,8 @@ interface CiudadCircuito {
 
 export default function CircuitoPersonalizadoSection() {
   const t = useTranslations("customCircuit");
-  const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
-  const [ubicacionesFiltradas, setUbicacionesFiltradas] = useState<Ubicacion[]>(
-    []
-  );
+  const { ubicaciones, loading } = useData(); // ✅ Usar Context API
+  
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
   const [filtroOrigen, setFiltroOrigen] = useState<string>("todo");
   const [filtroDestinos, setFiltroDestinos] = useState<string>("todo");
@@ -31,7 +31,6 @@ export default function CircuitoPersonalizadoSection() {
   const [ciudadesSeleccionadas, setCiudadesSeleccionadas] = useState<
     CiudadCircuito[]
   >([]);
-  const [loading, setLoading] = useState(true);
   const [calculando, setCalculando] = useState(false);
   const [precioTransporte, setPrecioTransporte] = useState(0);
   const [distanciaTotal, setDistanciaTotal] = useState(0);
@@ -39,14 +38,12 @@ export default function CircuitoPersonalizadoSection() {
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [busquedaCiudad, setBusquedaCiudad] = useState("");
   const [showCiudadDropdown, setShowCiudadDropdown] = useState(false);
-  const [ciudadesFiltradas, setCiudadesFiltradas] = useState<Ubicacion[]>([]);
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFinal, setFechaFinal] = useState("");
   const [errorValidacion, setErrorValidacion] = useState("");
 
-  useEffect(() => {
-    cargarUbicaciones();
-  }, []);
+  // ✅ Debounce para búsqueda (evita búsquedas en cada tecla)
+  const debouncedSearch = useDebounce(busquedaCiudad, 300);
   
   // Forzar selección de van cuando hay más de 4 personas
   useEffect(() => {
@@ -55,16 +52,8 @@ export default function CircuitoPersonalizadoSection() {
     }
   }, [cantidadPersonas, tipoVehiculo]);
 
-  useEffect(() => {
-    aplicarFiltro();
-  }, [ubicaciones, filtroOrigen, filtroDestinos]);
-
-  useEffect(() => {
-    calcularRuta();
-  }, [ciudadesSeleccionadas, cantidadPersonas, origenId]);
-
-  // Actualizar ciudades filtradas cuando cambia el filtro o la búsqueda
-  useEffect(() => {
+  // ✅ useMemo: Solo recalcular filtros cuando cambien las dependencias críticas
+  const ciudadesFiltradas = useMemo(() => {
     let resultado = ubicaciones;
 
     // Si estamos buscando destinos (origenId existe), excluir el origen y destinos ya seleccionados
@@ -97,8 +86,9 @@ export default function CircuitoPersonalizadoSection() {
       }
     }
 
-    if (busquedaCiudad.trim()) {
-      const searchLower = busquedaCiudad.toLowerCase();
+    // Usar debouncedSearch en lugar de busquedaCiudad
+    if (debouncedSearch.trim()) {
+      const searchLower = debouncedSearch.toLowerCase();
       resultado = resultado.filter(
         (u) =>
           u.nombre.toLowerCase().includes(searchLower) ||
@@ -106,10 +96,10 @@ export default function CircuitoPersonalizadoSection() {
       );
     }
 
-    setCiudadesFiltradas(resultado);
+    return resultado;
   }, [
     ubicaciones,
-    busquedaCiudad,
+    debouncedSearch,
     filtroOrigen,
     filtroDestinos,
     origenId,
@@ -117,25 +107,8 @@ export default function CircuitoPersonalizadoSection() {
     ciudadesSeleccionadas,
   ]);
 
-  const cargarUbicaciones = async () => {
-    try {
-      setLoading(true);
-      const data = await getUbicaciones();
-      setUbicaciones(data);
-      setUbicacionesFiltradas(data);
-    } catch (error) {
-      console.error("Error cargando ubicaciones:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const aplicarFiltro = () => {
-    // Los filtros se aplicarán dinámicamente en el useEffect de ciudadesFiltradas
-    setUbicacionesFiltradas(ubicaciones);
-  };
-
-  const calcularRuta = async () => {
+  // ✅ useCallback: Evita recrear la función en cada render
+  const calcularRuta = useCallback(async () => {
     if (!origenId || ciudadesSeleccionadas.length < 1) {
       setPrecioTransporte(0);
       setDistanciaTotal(0);
@@ -182,7 +155,16 @@ export default function CircuitoPersonalizadoSection() {
     } finally {
       setCalculando(false);
     }
-  };
+  }, [origenId, ciudadesSeleccionadas, cantidadPersonas]);
+
+  // ✅ useEffect con debounce para calcular ruta
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      calcularRuta();
+    }, 500); // Espera 500ms después del último cambio
+    
+    return () => clearTimeout(timeoutId);
+  }, [calcularRuta]);
 
   const agregarCiudad = (ciudadId: number) => {
     setCiudadesSeleccionadas((prev) => [...prev, { ciudadId }]);

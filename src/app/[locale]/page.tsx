@@ -1,14 +1,28 @@
 'use client';
 
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, FormEvent, Suspense } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import Link from 'next/link';
-import TripRequestForm from '@/components/TripRequestForm';
-import ExcursionesSection from '@/components/ExcursionesSection';
-import CircuitoPersonalizadoSection from '@/components/CircuitoPersonalizadoSection';
+import dynamic from 'next/dynamic';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { abrirWhatsApp } from '@/lib/whatsapp';
 import { CONTACT_INFO, SOCIAL_MEDIA, COMPANY_INFO, APP_NAME } from '@/lib/constants';
+
+// ✅ Lazy loading de componentes pesados
+const TripRequestForm = dynamic(() => import('@/components/TripRequestForm'), {
+  loading: () => <div className="animate-pulse h-96 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl"></div>,
+  ssr: true
+});
+
+const ExcursionesSection = dynamic(() => import('@/components/ExcursionesSection'), {
+  loading: () => <div className="animate-pulse h-96 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl"></div>,
+  ssr: false // No renderizar en servidor (se carga al scrollear)
+});
+
+const CircuitoPersonalizadoSection = dynamic(() => import('@/components/CircuitoPersonalizadoSection'), {
+  loading: () => <div className="animate-pulse h-96 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl"></div>,
+  ssr: false
+});
 
 export default function Home() {
   const t = useTranslations();

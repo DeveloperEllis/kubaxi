@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import { Ubicacion, PriceCalculation } from "@/types";
+import { cacheManager, createCacheKey } from "./cache";
 
 /**
  * Función de redondeo personalizado (misma lógica que Supabase)
@@ -22,19 +23,26 @@ function redondeoPersonalizado(valor: number): number {
 
 /**
  * Obtiene todas las ubicaciones disponibles desde Supabase
+ * ✅ Con caché de 10 minutos
  */
 export async function getUbicaciones(): Promise<Ubicacion[]> {
-  const { data, error } = await supabase
-    .from("ubicaciones_cuba")
-    .select("*")
-    .order("nombre", { ascending: true });
+  return cacheManager.getOrFetch(
+    'ubicaciones_all',
+    async () => {
+      const { data, error } = await supabase
+        .from("ubicaciones_cuba")
+        .select("*")
+        .order("nombre", { ascending: true });
 
-  if (error) {
-    console.error("Error fetching ubicaciones:", error);
-    throw error;
-  }
+      if (error) {
+        console.error("Error fetching ubicaciones:", error);
+        throw error;
+      }
 
-  return data || [];
+      return data || [];
+    },
+    10 * 60 * 1000 // 10 minutos
+  );
 }
 
 /**
@@ -59,6 +67,7 @@ export async function searchUbicaciones(query: string): Promise<Ubicacion[]> {
 /**
  * Calcula el precio, distancia y tiempo estimado entre dos ubicaciones
  * Usa la funcion RPC de Supabase 'calculate_reservation_details' igual que Flutter
+ * ✅ Con caché de 30 minutos (los precios no cambian frecuentemente)
  */
 export async function calculatePrice(
   origenId: number,
@@ -66,20 +75,25 @@ export async function calculatePrice(
   taxiType: "colectivo" | "privado",
   cantidadPersonas: number
 ): Promise<PriceCalculation> {
-  try {
-    // Llamar a la funcion RPC de Supabase
-    const { data, error } = await supabase.rpc(
-      "calculate_reservation_details",
-      {
-        p_id_origen: origenId,
-        p_id_destino: destinoId,
-      }
-    );
+  const cacheKey = createCacheKey('price', origenId, destinoId, taxiType, cantidadPersonas);
+  
+  return cacheManager.getOrFetch(
+    cacheKey,
+    async () => {
+      try {
+        // Llamar a la funcion RPC de Supabase
+        const { data, error } = await supabase.rpc(
+          "calculate_reservation_details",
+          {
+            p_id_origen: origenId,
+            p_id_destino: destinoId,
+          }
+        );
 
-    if (error) {
-      console.error("Error calling calculate_reservation_details:", error);
-      throw error;
-    }
+        if (error) {
+          console.error("Error calling calculate_reservation_details:", error);
+          throw error;
+        }
 
     if (!data) {
       throw new Error("No se pudo calcular la ruta");
@@ -120,10 +134,13 @@ export async function calculatePrice(
       distance_km: Math.round(distance_km * 10) / 10, // Redondear a 1 decimal
       estimated_time_minutes: Math.round(estimated_time_minutes),
     };
-  } catch (error) {
-    console.error("Error calculating price:", error);
-    throw error;
-  }
+      } catch (error) {
+        console.error("Error calculating price:", error);
+        throw error;
+      }
+    },
+    30 * 60 * 1000 // Caché de 30 minutos
+  );
 }
 
 /**

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, FormEvent } from 'react'
+import { useState, useEffect, FormEvent, useCallback, memo } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { fetchUbicacionesExcursiones, fetchExcursiones } from '@/lib/services'
 import { abrirWhatsApp } from '@/lib/whatsapp'
@@ -27,7 +27,8 @@ export default function ExcursionesSection() {
     }
   }, [ubicacionSeleccionada])
 
-  const cargarUbicaciones = async () => {
+  // ✅ useCallback: Evita recrear funciones en cada render
+  const cargarUbicaciones = useCallback(async () => {
     try {
       setLoading(true)
       const data = await fetchUbicacionesExcursiones()
@@ -42,9 +43,9 @@ export default function ExcursionesSection() {
     } finally {
       setLoading(false)
     }
-  }
+  }, []);
 
-  const cargarExcursiones = async (ubicacion: string) => {
+  const cargarExcursiones = useCallback(async (ubicacion: string) => {
     try {
       setLoadingExcursiones(true)
       const data = await fetchExcursiones(ubicacion)
@@ -55,7 +56,7 @@ export default function ExcursionesSection() {
     } finally {
       setLoadingExcursiones(false)
     }
-  }
+  }, []);
 
   if (loading) {
     return (
@@ -123,8 +124,8 @@ export default function ExcursionesSection() {
   )
 }
 
-// Componente para cada tarjeta de excursión
-function ExcursionCard({ excursion }: { excursion: Excursion }) {
+// ✅ memo: Componente para cada tarjeta de excursión - solo re-renderiza si cambia el ID
+const ExcursionCard = memo(({ excursion }: { excursion: Excursion }) => {
   const t = useTranslations('excursions')
   const [showDetails, setShowDetails] = useState(false)
   const [showBookingModal, setShowBookingModal] = useState(false)
@@ -433,4 +434,9 @@ function ExcursionCard({ excursion }: { excursion: Excursion }) {
       )}
     </div>
   )
-}
+}, (prevProps, nextProps) => {
+  // Solo re-renderiza si el ID de la excursión cambia
+  return prevProps.excursion.id === nextProps.excursion.id;
+});
+
+ExcursionCard.displayName = 'ExcursionCard';

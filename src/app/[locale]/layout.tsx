@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessages } from 'next-intl/server'
 import { APP_NAME } from '@/lib/constants'
+import { DataProvider } from '@/contexts/DataContext'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -29,7 +30,9 @@ export default async function RootLayout({
     <html lang={locale}>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          {children}
+          <DataProvider>
+            {children}
+          </DataProvider>
         </NextIntlClientProvider>
       </body>
     </html>
