@@ -282,13 +282,15 @@ export async function fetchUbicacionesExcursiones(): Promise<string[]> {
   // ✅ Intentar primero con vista materializada
   let { data, error } = await supabase
     .from("excursiones_populares")
-    .select("ubicacion");
+    .select("ubicacion")
+    .order("orden", { ascending: true });
 
   // Si la vista no existe, usar tabla original
   if (error && error.message.includes('does not exist')) {
     const result = await supabase
       .from("excursiones")
-      .select("ubicacion");
+      .select("ubicacion")
+      .order("orden", { ascending: true });
     
     data = result.data;
     error = result.error;
@@ -314,7 +316,8 @@ export async function fetchExcursiones(
   let { data, error } = await supabase
     .from("excursiones_populares")
     .select("*")
-    .eq("ubicacion", ubicacion.trim());
+    .eq("ubicacion", ubicacion.trim())
+    .order("orden", { ascending: true });
 
   // Si la vista no existe, usar tabla original
   if (error && error.message.includes('does not exist')) {
@@ -322,7 +325,7 @@ export async function fetchExcursiones(
       .from("excursiones")
       .select("*")
       .eq("ubicacion", ubicacion.trim())
-      .order("titulo_es");
+      .order("orden", { ascending: true });
     
     data = result.data;
     error = result.error;
