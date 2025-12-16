@@ -4,9 +4,15 @@
 /node_modules
 /.pnp
 .pnp.js
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
 
 # testing
 /coverage
+*.lcov
+.nyc_output
 
 # next.js
 /.next/
@@ -14,18 +20,25 @@
 
 # production
 /build
+/dist
 
 # misc
 .DS_Store
 *.pem
+Thumbs.db
 
 # debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
 
 # local env files
 .env*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 .env
 
 # vercel
@@ -34,3 +47,48 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDEs and editors
+/.idea
+/.vscode
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Documentation de desarrollo (opcional - descomenta si no quieres subirlos)
+# PROGRESS.md
+# FASE_3_COMPLETADA.md
+# CACHE_DEV_TOOLS.md
+# MEJORAS_RECOMENDADAS.md
+
+# Scripts locales
+git_commit.bat
+*.bat
+
+# Database migrations (si contienen datos sensibles)
+# migrations/
+
+# Vitest
+.vitest/
+coverage/
+coverage-final.json
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+.temp/
