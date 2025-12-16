@@ -3,6 +3,90 @@ import { Ubicacion, PriceCalculation } from "@/types";
 import { cacheManager, createCacheKey } from "./cache";
 
 /**
+ * ============================================
+ * SERVICIOS DE DATOS - EyTaxi Web
+ * ============================================
+ * 
+ * Este módulo utiliza VISTAS ESTÁNDAR de Supabase para optimizar
+ * el rendimiento de las consultas más frecuentes:
+ * 
+ * 📊 Vistas Estándar Disponibles:
+ * - ubicaciones_optimizadas: Ubicaciones con contadores pre-calculados
+ * - excursiones_populares: Excursiones con datos de ubicación enriquecidos
+ * - paquetes_activos: Paquetes de viaje activos ordenados
+ * - distancias_frecuentes: Distancias con información de origen/destino
+ * 
+ * 🚀 Ventajas:
+ * - Reducción de JOINs en tiempo real
+ * - Datos pre-calculados (contadores, agregaciones)
+ * - Actualización automática con cada cambio en las tablas
+ * - Consultas más rápidas sin necesidad de refresh manual
+ * 
+ * 🔄 Sistema de Fallback:
+ * Todas las funciones intentan usar las vistas primero.
+ * Si no existen (primera instalación), automáticamente usan las tablas originales.
+ * 
+ * 📝 Nota: Para crear las vistas, ejecutar database/materialized_views.sql
+ * 
+ * 💾 Sistema de Caché:
+ * - Desarrollo: 1 minuto (actualización rápida)
+ * - Producción: 10-30 minutos (mejor rendimiento)
+ * - Limpieza manual: clearAllCache() o desde consola con window.clearCache()
+ */
+
+// Detectar entorno de desarrollo
+const isDevelopment = process.env.NODE_ENV === 'development';
+
+// Tiempos de caché adaptativos
+const CACHE_TIME = {
+  ubicaciones: isDevelopment ? 1 * 60 * 1000 : 10 * 60 * 1000,  // 1 min dev / 10 min prod
+  precios: isDevelopment ? 1 * 60 * 1000 : 30 * 60 * 1000,      // 1 min dev / 30 min prod
+};
+
+/**
+ * Limpia todo el caché de datos
+ * Útil después de actualizar la base de datos en desarrollo
+ */
+export function clearAllCache(): void {
+  cacheManager.clear();
+  console.log('✅ Caché limpiado completamente');
+}
+
+/**
+ * Limpia el caché de ubicaciones
+ */
+export function clearUbicacionesCache(): void {
+  const stats = cacheManager.getStats();
+  stats.keys.forEach(key => {
+    if (key.includes('ubicaciones')) {
+      cacheManager.delete(key);
+    }
+  });
+  console.log('✅ Caché de ubicaciones limpiado');
+}
+
+/**
+ * Limpia el caché de precios
+ */
+export function clearPreciosCache(): void {
+  const stats = cacheManager.getStats();
+  stats.keys.forEach(key => {
+    if (key.includes('price')) {
+      cacheManager.delete(key);
+    }
+  });
+  console.log('✅ Caché de precios limpiado');
+}
+
+// Hacer las funciones accesibles desde la consola del navegador en desarrollo
+if (typeof window !== 'undefined' && isDevelopment) {
+  (window as any).clearCache = clearAllCache;
+  (window as any).clearUbicacionesCache = clearUbicacionesCache;
+  (window as any).clearPreciosCache = clearPreciosCache;
+  (window as any).getCacheStats = () => cacheManager.getStats();
+}
+
+/**
  * Función de redondeo personalizado (misma lógica que Supabase)
  * - Si termina en 5 → deja el número tal cual
  * - Si termina en 6,7,8,9 → sube a la decena siguiente
@@ -23,16 +107,28 @@ function redondeoPersonalizado(valor: number): number {
 
 /**
  * Obtiene todas las ubicaciones disponibles desde Supabase
- * ✅ Con caché de 10 minutos
+ * ✅ Con caché adaptativo (1 min dev / 10 min prod)
+ * ✅ Usar vista estándar si está disponible (fallback a tabla original)
  */
 export async function getUbicaciones(): Promise<Ubicacion[]> {
   return cacheManager.getOrFetch(
     'ubicaciones_all',
     async () => {
-      const { data, error } = await supabase
-        .from("ubicaciones_cuba")
-        .select("*")
-        .order("nombre", { ascending: true });
+      // ✅ Intentar primero con vista materializada
+      let { data, error } = await supabase
+        .from("ubicaciones_optimizadas")
+        .select("*");
+
+      // Si la vista no existe, usar tabla original
+      if (error && error.message.includes('does not exist')) {
+        const result = await supabase
+          .from("ubicaciones_cuba")
+          .select("*")
+          .order("nombre", { ascending: true });
+        
+        data = result.data;
+        error = result.error;
+      }
 
       if (error) {
         console.error("Error fetching ubicaciones:", error);
@@ -41,20 +137,35 @@ export async function getUbicaciones(): Promise<Ubicacion[]> {
 
       return data || [];
     },
-    10 * 60 * 1000 // 10 minutos
+    CACHE_TIME.ubicaciones
   );
 }
 
 /**
  * Busca ubicaciones por nombre
+ * ✅ Usar vista estándar si está disponible (fallback a tabla original)
  */
 export async function searchUbicaciones(query: string): Promise<Ubicacion[]> {
-  const { data, error } = await supabase
-    .from("ubicaciones_cuba")
+  // ✅ Intentar primero con vista materializada
+  let { data, error } = await supabase
+    .from("ubicaciones_optimizadas")
     .select("*")
     .ilike("nombre", `%${query}%`)
     .order("nombre", { ascending: true })
     .limit(10);
+
+  // Si la vista no existe, usar tabla original
+  if (error && error.message.includes('does not exist')) {
+    const result = await supabase
+      .from("ubicaciones_cuba")
+      .select("*")
+      .ilike("nombre", `%${query}%`)
+      .order("nombre", { ascending: true })
+      .limit(10);
+    
+    data = result.data;
+    error = result.error;
+  }
 
   if (error) {
     console.error("Error searching ubicaciones:", error);
@@ -139,7 +250,7 @@ export async function calculatePrice(
         throw error;
       }
     },
-    30 * 60 * 1000 // Caché de 30 minutos
+    CACHE_TIME.precios
   );
 }
 
@@ -165,13 +276,25 @@ export async function createTripRequest(
 
 /**
  * Obtiene las ubicaciones unicas disponibles en la tabla excursiones
+ * ✅ Usar vista estándar si está disponible (fallback a tabla original)
  */
 export async function fetchUbicacionesExcursiones(): Promise<string[]> {
-  const { data, error } = await supabase
-    .from("excursiones")
+  // ✅ Intentar primero con vista materializada
+  let { data, error } = await supabase
+    .from("excursiones_populares")
     .select("ubicacion");
 
-  if (error) {
+  // Si la vista no existe, usar tabla original
+  if (error && error.message.includes('does not exist')) {
+    const result = await supabase
+      .from("excursiones")
+      .select("ubicacion");
+    
+    data = result.data;
+    error = result.error;
+  }
+
+  if (error || !data) {
     return [];
   }
 
@@ -182,15 +305,28 @@ export async function fetchUbicacionesExcursiones(): Promise<string[]> {
 
 /**
  * Obtiene las excursiones disponibles filtradas por ubicacion
+ * ✅ Usar vista estándar si está disponible (fallback a tabla original)
  */
 export async function fetchExcursiones(
   ubicacion: string
 ): Promise<import("@/types").Excursion[]> {
-  const { data, error } = await supabase
-    .from("excursiones")
+  // ✅ Intentar primero con vista materializada
+  let { data, error } = await supabase
+    .from("excursiones_populares")
     .select("*")
-    .eq("ubicacion", ubicacion.trim())
-    .order("titulo_es");
+    .eq("ubicacion", ubicacion.trim());
+
+  // Si la vista no existe, usar tabla original
+  if (error && error.message.includes('does not exist')) {
+    const result = await supabase
+      .from("excursiones")
+      .select("*")
+      .eq("ubicacion", ubicacion.trim())
+      .order("titulo_es");
+    
+    data = result.data;
+    error = result.error;
+  }
 
   if (error) {
     return [];
@@ -201,15 +337,27 @@ export async function fetchExcursiones(
 
 /**
  * Obtiene todos los paquetes de viaje activos ordenados
+ * ✅ Usar vista estándar si está disponible (fallback a tabla original)
  */
 export async function fetchPaquetesViaje(): Promise<
   import("@/types").PaqueteViaje[]
 > {
-  const { data, error } = await supabase
-    .from("paquetes_viaje")
-    .select("*")
-    .eq("activo", true)
-    .order("orden");
+  // ✅ Intentar primero con vista materializada
+  let { data, error } = await supabase
+    .from("paquetes_activos")
+    .select("*");
+
+  // Si la vista no existe, usar tabla original
+  if (error && error.message.includes('does not exist')) {
+    const result = await supabase
+      .from("paquetes_viaje")
+      .select("*")
+      .eq("activo", true)
+      .order("orden");
+    
+    data = result.data;
+    error = result.error;
+  }
 
   if (error) {
     return [];

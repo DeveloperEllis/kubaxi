@@ -2,6 +2,7 @@
 
 import { useState, useEffect, FormEvent, useCallback, memo } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
+import Image from 'next/image'
 import { fetchUbicacionesExcursiones, fetchExcursiones } from '@/lib/services'
 import { abrirWhatsApp } from '@/lib/whatsapp'
 import { getTranslatedField } from '@/lib/i18n-helpers'
@@ -205,12 +206,13 @@ const ExcursionCard = memo(({ excursion }: { excursion: Excursion }) => {
       {/* Imagen */}
       <div className="relative h-52 bg-gradient-to-br from-blue-500 to-indigo-600">
         {excursion.imagen_url ? (
-          <img
+          <Image
             src={excursion.imagen_url}
             alt={titulo}
-            loading="lazy"
-            decoding="async"
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover"
+            priority={false}
           />
         ) : (
           <div className="flex items-center justify-center h-full text-6xl">

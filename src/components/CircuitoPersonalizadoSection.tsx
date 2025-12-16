@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect, FormEvent, useMemo, useCallback } from "react";
+import { useState, useEffect, FormEvent, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { calculatePrice } from "@/lib/services";
 import { abrirWhatsApp } from "@/lib/whatsapp";
 import { useData } from "@/contexts/DataContext";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useCircuitCalculator } from "@/hooks/useCircuitCalculator";
+import { useFormValidation } from "@/hooks/useFormValidation";
+import { circuitoPersonalizadoSchema } from "@/lib/validationSchemas";
 import type { Ubicacion } from "@/types";
 
 interface CiudadCircuito {
@@ -31,9 +33,15 @@ export default function CircuitoPersonalizadoSection() {
   const [ciudadesSeleccionadas, setCiudadesSeleccionadas] = useState<
     CiudadCircuito[]
   >([]);
-  const [calculando, setCalculando] = useState(false);
-  const [precioTransporte, setPrecioTransporte] = useState(0);
-  const [distanciaTotal, setDistanciaTotal] = useState(0);
+  
+  // ✅ Custom hook para cálculos de circuito
+  const {
+    precioTransporte,
+    distanciaTotal,
+    calculando,
+    error: errorCalculo,
+    calcularRuta,
+  } = useCircuitCalculator(origenId, ciudadesSeleccionadas, cantidadPersonas);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [busquedaCiudad, setBusquedaCiudad] = useState("");
@@ -41,6 +49,9 @@ export default function CircuitoPersonalizadoSection() {
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFinal, setFechaFinal] = useState("");
   const [errorValidacion, setErrorValidacion] = useState("");
+
+  // ✅ Validación con Zod
+  const { errors: validationErrors, validate, clearErrors } = useFormValidation(circuitoPersonalizadoSchema);
 
   // ✅ Debounce para búsqueda (evita búsquedas en cada tecla)
   const debouncedSearch = useDebounce(busquedaCiudad, 300);
@@ -107,57 +118,7 @@ export default function CircuitoPersonalizadoSection() {
     ciudadesSeleccionadas,
   ]);
 
-  // ✅ useCallback: Evita recrear la función en cada render
-  const calcularRuta = useCallback(async () => {
-    if (!origenId || ciudadesSeleccionadas.length < 1) {
-      setPrecioTransporte(0);
-      setDistanciaTotal(0);
-      return;
-    }
-
-    try {
-      setCalculando(true);
-      let precioTotal = 0;
-      let distanciaTotal = 0;
-
-      // Calcular desde origen al primer destino
-      const primerDestino = ciudadesSeleccionadas[0].ciudadId;
-      let resultado = await calculatePrice(
-        origenId,
-        primerDestino,
-        "privado",
-        cantidadPersonas
-      );
-      precioTotal += resultado.price;
-      distanciaTotal += resultado.distance_km;
-
-      // Calcular entre destinos
-      for (let i = 0; i < ciudadesSeleccionadas.length - 1; i++) {
-        const origen = ciudadesSeleccionadas[i].ciudadId;
-        const destino = ciudadesSeleccionadas[i + 1].ciudadId;
-
-        resultado = await calculatePrice(
-          origen,
-          destino,
-          "privado",
-          cantidadPersonas
-        );
-        precioTotal += resultado.price;
-        distanciaTotal += resultado.distance_km;
-      }
-
-      setPrecioTransporte(Math.round(precioTotal));
-      setDistanciaTotal(Math.round(distanciaTotal * 10) / 10);
-    } catch (error) {
-      console.error("Error calculando ruta:", error);
-      setPrecioTransporte(0);
-      setDistanciaTotal(0);
-    } finally {
-      setCalculando(false);
-    }
-  }, [origenId, ciudadesSeleccionadas, cantidadPersonas]);
-
-  // ✅ useEffect con debounce para calcular ruta
+  // ✅ useEffect con debounce para recalcular ruta automáticamente
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       calcularRuta();
@@ -269,44 +230,30 @@ export default function CircuitoPersonalizadoSection() {
 
   const validarFormulario = (): boolean => {
     setErrorValidacion("");
+    clearErrors();
 
-    // Validar tipo de vehículo
-    if (!tipoVehiculo) {
-      setErrorValidacion(`⚠️ ${t('errorVehicleType')}`);
-      return false;
-    }
+    // ✅ Preparar datos para validación Zod
+    const origenData = origenId ? {
+      id: origenId,
+      nombre: ubicaciones.find(u => u.id === origenId)?.nombre || ''
+    } : undefined as any;
 
-    // Validar fecha de inicio
-    if (!fechaInicio) {
-      setErrorValidacion(`⚠️ ${t('errorStartDate')}`);
-      return false;
-    }
+    const formData = {
+      origen: origenData,
+      ciudadesSeleccionadas,
+      cantidadPersonas,
+      tipoVehiculo: tipoVehiculo || '' as any,
+      fechaInicio,
+      fechaFinal,
+    };
 
-    // Validar fecha de fin
-    if (!fechaFinal) {
-      setErrorValidacion(`⚠️ ${t('errorEndDate')}`);
-      return false;
-    }
+    // ✅ Validar con Zod
+    const isValid = validate(formData);
 
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    const inicio = new Date(fechaInicio);
-    const fin = new Date(fechaFinal);
-    
-    // Calcular fecha mínima (7 días desde hoy)
-    const fechaMinima = new Date();
-    fechaMinima.setHours(0, 0, 0, 0);
-    fechaMinima.setDate(fechaMinima.getDate() + 6);
-
-    // Validar que fecha de inicio sea al menos 7 días después de hoy (usar <= para incluir el séptimo día)
-    if (inicio < fechaMinima) {
-      setErrorValidacion(`⚠️ ${t('errorStartDateMinimum')}`);
-      return false;
-    }
-
-    // Validar que fecha de fin no sea menor que fecha de inicio
-    if (fin <= inicio) {
-      setErrorValidacion(`⚠️ ${t('errorEndDateBeforeStart')}`);
+    if (!isValid) {
+      // Mostrar el primer error encontrado
+      const firstError = Object.values(validationErrors)[0];
+      setErrorValidacion(firstError || '⚠️ Por favor completa todos los campos correctamente');
       return false;
     }
 

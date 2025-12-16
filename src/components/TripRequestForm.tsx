@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
-import { calculatePrice } from '@/lib/services'
 import { abrirWhatsApp } from '@/lib/whatsapp'
 import { useData } from '@/contexts/DataContext'
 import { useDebounce } from '@/hooks/useDebounce'
+import { usePriceCalculator } from '@/hooks/usePriceCalculator'
+import { useFormValidation } from '@/hooks/useFormValidation'
+import { tripRequestSchema } from '@/lib/validationSchemas'
 import { Ubicacion } from '@/types'
 
 interface TripRequestFormProps {
@@ -34,12 +36,21 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
   const [horarioColectivo, setHorarioColectivo] = useState<'mañana' | 'tarde' | null>(null)
   const [isOrienteRoute, setIsOrienteRoute] = useState(false)
   
-  const [price, setPrice] = useState<number | null>(null)
-  const [distance, setDistance] = useState<number | null>(null)
-  const [estimatedTime, setEstimatedTime] = useState<number | null>(null)
+  // ✅ Custom hook para cálculos de precio
+  const {
+    price,
+    distance,
+    estimatedTime,
+    loading: calculandoPrecio,
+    error: errorPrecio,
+    calcular: calcularPrecio,
+  } = usePriceCalculator();
   
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // ✅ Validación con Zod
+  const { errors: validationErrors, validate, clearErrors } = useFormValidation(tripRequestSchema);
 
   // ✅ Debounce para búsquedas
   const debouncedOrigenSearch = useDebounce(origenSearch, 300);
@@ -141,54 +152,42 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
     }
   }, [selectedOrigen, selectedDestino, taxiType])
 
-  // Calculate price when all required fields are filled
+  // ✅ Calcular precio automáticamente cuando cambien los campos requeridos
   useEffect(() => {
     if (selectedOrigen && selectedDestino && cantidadPersonas > 0) {
-      calculatePrice(
+      calcularPrecio(
         selectedOrigen.id,
         selectedDestino.id,
         taxiType,
         cantidadPersonas
-      ).then(result => {
-        setPrice(result.price)
-        setDistance(result.distance_km)
-        setEstimatedTime(result.estimated_time_minutes)
-      }).catch(err => {
-        console.error('Error calculating price:', err)
-      })
+      );
     }
-  }, [selectedOrigen, selectedDestino, taxiType, cantidadPersonas])
+  }, [selectedOrigen, selectedDestino, taxiType, cantidadPersonas, calcularPrecio]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!selectedOrigen || !selectedDestino) {
-      setError(t('selectOrigin'))
-      return
-    }
+    // ✅ Validar con Zod
+    const isValid = validate({
+      origen: selectedOrigen ? { id: selectedOrigen.id, nombre: selectedOrigen.nombre } : undefined as any,
+      destino: selectedDestino ? { id: selectedDestino.id, nombre: selectedDestino.nombre } : undefined as any,
+      taxiType,
+      cantidadPersonas,
+      tripDate,
+      tripTime,
+      horarioColectivo,
+    });
 
-    if (!tripDate) {
-      setError(t('selectDate'))
-      return
-    }
-
-    if (!cantidadPersonas || cantidadPersonas < 1) {
-      setError(t('selectPassengers'))
-      return
-    }
-
-    if (taxiType === 'colectivo' && !horarioColectivo) {
-      setError(t('selectScheduleError'))
-      return
-    }
-
-    if (taxiType === 'privado' && !tripTime) {
-      setError(t('selectTimeError'))
-      return
+    if (!isValid) {
+      // Mostrar el primer error encontrado
+      const firstError = Object.values(validationErrors)[0];
+      setError(firstError || 'Por favor completa todos los campos requeridos');
+      return;
     }
 
     setLoading(true)
     setError(null)
+    clearErrors();
 
     try {
       // Preparar la hora de forma legible
