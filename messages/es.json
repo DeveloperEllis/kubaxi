@@ -40,7 +40,14 @@
     "selectDate": "Por favor selecciona una fecha",
     "selectPassengers": "Por favor ingresa la cantidad de personas",
     "selectScheduleError": "Por favor selecciona el horario (mañana o tarde)",
-    "selectTimeError": "Por favor selecciona una hora para el taxi privado"
+    "selectTimeError": "Por favor selecciona una hora para el taxi privado",
+    
+    "filters": {
+      "all": "Todo",
+      "tourist": "Turístico",
+      "keys": "Cayos",
+      "airports": "Aeropuertos"
+    }
   },
   "excursions": {
     "title": "Excursiones en Cuba",

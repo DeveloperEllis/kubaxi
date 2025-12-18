@@ -40,7 +40,14 @@
     "selectDate": "Please select a date",
     "selectPassengers": "Please enter number of passengers",
     "selectScheduleError": "Please select schedule (morning or afternoon)",
-    "selectTimeError": "Please select a time for private taxi"
+    "selectTimeError": "Please select a time for private taxi",
+    
+    "filters": {
+      "all": "All",
+      "tourist": "Tourist",
+      "keys": "Keys",
+      "airports": "Airports"
+    }
   },
   "excursions": {
     "title": "Excursions in Cuba",

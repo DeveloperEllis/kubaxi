@@ -60,10 +60,10 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
   const origenSuggestions = useMemo(() => {
     let ubicacionesFiltradas = todasUbicaciones;
     
-    // Excluir el destino seleccionado y ubicaciones de la misma provincia
+    // Excluir solo el destino seleccionado (mismo ID)
     if (selectedDestino) {
       ubicacionesFiltradas = ubicacionesFiltradas.filter(
-        u => u.id !== selectedDestino.id && u.provincia !== selectedDestino.provincia
+        u => u.id !== selectedDestino.id
       );
     }
     
@@ -100,10 +100,10 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
   const destinoSuggestions = useMemo(() => {
     let ubicacionesFiltradas = todasUbicaciones;
     
-    // Excluir el origen seleccionado y ubicaciones de la misma provincia
+    // Excluir solo el origen seleccionado (mismo ID)
     if (selectedOrigen) {
       ubicacionesFiltradas = ubicacionesFiltradas.filter(
-        u => u.id !== selectedOrigen.id 
+        u => u.id !== selectedOrigen.id
       );
     }
     
@@ -257,7 +257,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                 onChange={(e) => setMostrarFiltros(e.target.checked)}
                 className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
               />
-              <span className="text-sm text-slate-700 font-medium">Mostrar filtros de ubicación</span>
+              <span className="text-sm text-slate-700 font-medium">{t("showFilters")}</span>
             </label>
           </div>
 
@@ -274,7 +274,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                Todo
+                {t('filters.all')}
               </button>
               <button
                 type="button"
@@ -285,7 +285,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                Turístico
+                {t('filters.tourist')}
               </button>
               <button
                 type="button"
@@ -296,7 +296,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                Cayos
+                {t('filters.keys')}
               </button>
               <button
                 type="button"
@@ -307,7 +307,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                Aeropuertos
+                {t('filters.airports')}
               </button>
             </div>
             )}
@@ -376,7 +376,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                Todo
+                {t('filters.all')}
               </button>
               <button
                 type="button"
@@ -387,7 +387,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                Turístico
+                {t('filters.tourist')}
               </button>
               <button
                 type="button"
@@ -398,7 +398,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                Cayos
+                {t('filters.keys')}
               </button>
               <button
                 type="button"
@@ -409,7 +409,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                Aeropuertos
+                {t('filters.airports')}
               </button>
             </div>
             )}
