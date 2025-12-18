@@ -103,7 +103,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
     // Excluir el origen seleccionado y ubicaciones de la misma provincia
     if (selectedOrigen) {
       ubicacionesFiltradas = ubicacionesFiltradas.filter(
-        u => u.id !== selectedOrigen.id && u.provincia !== selectedOrigen.provincia
+        u => u.id !== selectedOrigen.id 
       );
     }
     
