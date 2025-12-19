@@ -19,6 +19,7 @@
     "feature3": "Precios Competitivos"
   },
   "tripForm": {
+    "showFilters": "Mostrar filtros",
     "title": "Reserva tu Viaje",
     "origin": "Origen - ¿Desde dónde viajas?",
     "destination": "Destino - ¿A dónde vas?",

@@ -19,6 +19,7 @@
     "feature3": "Competitive Prices"
   },
   "tripForm": {
+    "showFilters": "Show filters",
     "title": "Book Your Trip",
     "origin": "Origin - Where are you traveling from?",
     "destination": "Destination - Where are you going?",

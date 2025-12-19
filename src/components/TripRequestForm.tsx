@@ -257,7 +257,7 @@ export default function TripRequestForm({ onBack }: TripRequestFormProps) {
                 onChange={(e) => setMostrarFiltros(e.target.checked)}
                 className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
               />
-              <span className="text-sm text-slate-700 font-medium">{t("showFilters")}</span>
+              <span className="text-sm text-slate-700 font-medium">{t('showFilters')}</span>
             </label>
           </div>
 
