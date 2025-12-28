@@ -96,12 +96,12 @@ function redondeoPersonalizado(valor: number): number {
   const entero = Math.floor(valor);
   const unidad = entero % 10;
 
-  if (unidad === 5) {
-    return entero;
-  } else if (unidad >= 6) {
-    return Math.floor(entero / 10 + 1) * 10;
-  } else {
+  if (unidad <= 2) {
     return Math.floor(entero / 10) * 10;
+  } else if (unidad >= 3 && unidad <= 5) {
+    return Math.floor(entero / 10) * 10 + 5;
+  } else {
+    return Math.ceil(entero / 10) * 10;
   }
 }
 
@@ -222,7 +222,7 @@ export async function calculatePrice(
 
     // Calcular precio segun tipo de taxi (misma logica que Flutter)
     let price = 0;
-    const precioxpersona = redondeoPersonalizado(base_price / 4);
+    const precioxpersona = redondeoPersonalizado(base_price / 4.55);
     if (taxiType === "colectivo") {
       // Para colectivo: (precio_base / 4) * cantidad_personas
 

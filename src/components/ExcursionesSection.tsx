@@ -219,18 +219,7 @@ const ExcursionCard = memo(({ excursion }: { excursion: Excursion }) => {
             🏖️
           </div>
         )}
-        
-        {/* Badge de precio */}
-        <div className="absolute top-4 right-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-xl backdrop-blur-sm">
-          {excursion.precio_por_pax ? (
-            <div className="text-sm">
-              <div className="text-xs opacity-90">Desde</div>
-              <div>${excursion.precio}</div>
-            </div>
-          ) : (
-            <div>${excursion.precio}</div>
-          )}
-        </div>
+     
       </div>
 
       {/* Contenido */}
