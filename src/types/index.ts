@@ -82,3 +82,39 @@ export interface CircuitoPersonalizado {
   precioTotal: number
   distanciaTotal: number
 }
+
+// ============================================
+// TIPOS PARA SISTEMA DE PRECIOS PERSONALIZADOS
+// ============================================
+
+export interface PrecioTransferCustom {
+  id_origen: number
+  id_destino: number
+  distancia_km: number
+  tiempo_min: number
+  precio_base: number
+  notas?: string
+  ajustado_por?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface PrecioTransferConNombres extends PrecioTransferCustom {
+  origen_nombre: string
+  origen_provincia: string
+  destino_nombre: string
+  destino_provincia: string
+  precio_custom: number
+  precio_automatico: number
+  diferencia_precio: number
+}
+
+export interface UpsertPrecioCustomParams {
+  p_id_origen: number
+  p_id_destino: number
+  p_distancia_km: number
+  p_tiempo_min: number
+  p_precio_base: number
+  p_notas?: string
+  p_ajustado_por?: string
+}

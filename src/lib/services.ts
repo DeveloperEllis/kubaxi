@@ -177,7 +177,8 @@ export async function searchUbicaciones(query: string): Promise<Ubicacion[]> {
 
 /**
  * Calcula el precio, distancia y tiempo estimado entre dos ubicaciones
- * Usa la funcion RPC de Supabase 'calculate_reservation_details' igual que Flutter
+ * Usa la funcion RPC de Supabase 'calculate_reservation_details_v2'
+ * que consulta primero precios personalizados, luego calcula automáticamente
  * ✅ Con caché de 30 minutos (los precios no cambian frecuentemente)
  */
 export async function calculatePrice(
@@ -192,9 +193,9 @@ export async function calculatePrice(
     cacheKey,
     async () => {
       try {
-        // Llamar a la funcion RPC de Supabase
+        // Llamar a la funcion RPC de Supabase v2 (con soporte para precios custom)
         const { data, error } = await supabase.rpc(
-          "calculate_reservation_details",
+          "calculate_reservation_details_v2",
           {
             p_id_origen: origenId,
             p_id_destino: destinoId,
